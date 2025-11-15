@@ -2,11 +2,14 @@
 
 namespace App\Exceptions;
 
+use App\Traits\ApiResponse;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Throwable;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Handler extends ExceptionHandler
 {
+    use ApiResponse;
     /**
      * The list of the inputs that are never flashed to the session on validation exceptions.
      *
@@ -23,8 +26,29 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (ApiException $e , $request){
+            if(!$request->is('api/*'))
+            {
+                return null;
+            }
+            return $this->errorResponse($e->getMessage() , $e->getCode());
+        });
+
+        $this->renderable(function (ValidationException $e , $request){
+            if(!$request->is('api/*'))
+            {
+                return null;
+            }
+            $firstError = collect($e->errors())->flatten()->first();
+            return $this->errorResponse($firstError ,422);
+        });
+
+        $this->renderable(function (NotFoundHttpException $e , $request){
+            if(!$request->is('api/*'))
+            {
+                return null;
+            }
+            return $this->errorResponse('Resource not found' , 404);
         });
     }
 }

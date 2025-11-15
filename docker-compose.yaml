@@ -54,7 +54,7 @@ services:
       - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: m_b
+      MYSQL_DATABASE: internet_information
       MYSQL_USER: sail
       MYSQL_PASSWORD: password
     volumes:
