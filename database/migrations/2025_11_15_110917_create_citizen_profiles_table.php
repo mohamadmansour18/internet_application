@@ -12,15 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('staff_profiles', function (Blueprint $table) {
+        Schema::create('citizen_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users' , 'id')->onDelete('cascade');
-            $table->foreignId('agency_id')->constrained('agencies' , 'id');
             $table->string('phone' , 10)->nullable();
-            $table->enum('city' , ProfileCity::convertEnumToArray())->nullable();
             $table->string('profile_picture')->nullable();
-            $table->string('job_title')->nullable();
-            $table->string('department')->nullable();
+            $table->string('national_number',11)->unique();
+            $table->enum('city' , ProfileCity::convertEnumToArray())->nullable();
+            $table->string('address',50)->nullable();
             $table->timestamps();
         });
     }
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('staff_profiles');
+        Schema::dropIfExists('citizen_profiles');
     }
 };

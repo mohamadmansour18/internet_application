@@ -2,29 +2,27 @@
 
 namespace App\Models;
 
-use App\Enums\ProfileCity;
+use App\Enums\OtpCodePurpose;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StaffProfile extends Model
+class OtpCodes extends Model
 {
     use HasFactory;
 
-    protected $table = 'staff_profiles';
+    protected $table = 'otp_codes';
 
     protected $fillable = [
         'user_id',
-        'agency_id',
-        'phone',
-        'profile_picture',
-        'city',
-        'job_title',
-        'department',
+        'otp_code',
+        'expires_at',
+        'is_used',
+        'purpose',
     ];
 
     protected $casts = [
-        'city' => ProfileCity::class,
+        'purpose' =>  OtpCodePurpose::class,
     ];
 
     public function user(): BelongsTo

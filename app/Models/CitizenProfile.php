@@ -2,29 +2,27 @@
 
 namespace App\Models;
 
-use App\Enums\ProfileCity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StaffProfile extends Model
+class CitizenProfile extends Model
 {
     use HasFactory;
 
-    protected $table = 'staff_profiles';
+    protected $table = 'citizen_profiles';
 
     protected $fillable = [
         'user_id',
-        'agency_id',
         'phone',
         'profile_picture',
+        'national_number',
         'city',
-        'job_title',
-        'department',
+        'address'
     ];
 
     protected $casts = [
-        'city' => ProfileCity::class,
+        'city' => CitizenProfile::class,
     ];
 
     public function user(): BelongsTo

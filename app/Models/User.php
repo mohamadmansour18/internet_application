@@ -5,6 +5,8 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -57,5 +59,45 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims(): array
     {
         return [];
+    }
+
+    public function staffProfile(): HasOne
+    {
+        return $this->hasOne(StaffProfile::class , 'user_id' , 'id');
+    }
+
+    public function citizenProfile(): HasOne
+    {
+        return $this->hasOne(CitizenProfile::class , 'user_id' , 'id');
+    }
+
+    public function citizenComplaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class , 'citizen_id' , 'id');
+    }
+
+    public function officerComplaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class , 'assigned_officer_id' , 'id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class , 'uploaded_by' , 'id');
+    }
+
+    public function auditLogs(): HasMany
+    {
+        return $this->hasMany(AuditLog::class , 'actor_id' , 'id');
+    }
+
+    public function failedLogins(): HasMany
+    {
+        return $this->hasMany(FailedLogin::class , 'user_id' , 'id');
+    }
+
+    public function otpCodes(): HasMany
+    {
+        return $this->hasMany(OtpCodes::class , 'user_id' , 'id');
     }
 }

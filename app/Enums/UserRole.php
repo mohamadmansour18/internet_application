@@ -7,7 +7,7 @@ enum UserRole: string
 {
     use EnumToArray;
 
-    case Citizen = 'citizen';
-    case Officer  = 'officer';
-    case Manager   = 'manager';
+    case CITIZEN = 'citizen';
+    case OFFICER  = 'officer';
+    case MANAGER   = 'manager';
 }
