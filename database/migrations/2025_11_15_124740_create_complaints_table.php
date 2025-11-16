@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('complaints', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('citizen_id')->constrained('users' , 'id')->onDelete('set null');
+            $table->foreignId('citizen_id')->nullable()->constrained('users' , 'id')->onDelete('set null');
             $table->foreignId('agency_id')->constrained('agencies' , 'id')->onDelete('restrict');
             $table->foreignId('complaint_type_id')->constrained('complaint_types' , 'id')->onDelete('restrict');
             $table->foreignId('assigned_officer_id')->nullable()->constrained('users' , 'id');

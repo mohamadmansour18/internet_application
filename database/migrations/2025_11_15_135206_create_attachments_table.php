@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('attachments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('complaint_id')->constrained('complaints')->onDelete('cascade');
-            $table->foreignId('uploaded_by')->constrained('users')->onDelete('set null');
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->onDelete('set null');
             $table->string('path');
             $table->timestamps();
         });
