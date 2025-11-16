@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -49,6 +50,17 @@ class Handler extends ExceptionHandler
                 return null;
             }
             return $this->errorResponse('Resource not found' , 404);
+        });
+
+        $this->renderable(function (ThrottleRequestsException $e , $request){
+            if(!$request->is('api/*'))
+            {
+                return null;
+            }
+            $headers = $e->getHeaders();
+            $retryAfter = $headers['Retry-After'] ?? null;
+
+            return $this->errorResponse(" الكثير من المحاولات ، قم بالمحاولة مرة اخرى بعد $retryAfter ثانية " , 429);
         });
     }
 }

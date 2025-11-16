@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -24,9 +25,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
-        });
+        $this->configureRateLimiting();
 
         $this->routes(function () {
             Route::middleware('api')
@@ -35,6 +34,43 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
+        });
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('globalApi' , function(Request $request) {
+            $key = optional($request->user())->id ? 'user:' . $request->user()->id : 'ip:' . $request->ip();
+            $max = config('rateLimits.globalApi' , 60);
+            return Limit::perMinute($max)->by($key);
+        });
+
+        RateLimiter::for('loginApi' , function (Request $request) {
+            $key = 'login:' . ($request->ip());
+            $max = config('rateLimits.loginApi' , 5);
+            return Limit::perMinute($max)->by($key);
+        });
+
+        RateLimiter::for('roleBasedApi' , function (Request $request) {
+            $user = $request->user();
+            $baseKey = $user ? 'user:' . $user->id : 'ip:' . $request->ip();
+
+            if($user && $user->role === UserRole::MANAGER->value)
+            {
+                $max = config('rateLimits.manager' , 100);
+                return Limit::perMinute($max)->by($baseKey);
+            }
+            if($user && $user->role === UserRole::OFFICER->value)
+            {
+                $max = config('rateLimits.officer' , 75);
+                return Limit::perMinute(75)->by($baseKey);
+            }
+            if($user && $user->role === UserRole::CITIZEN->value)
+            {
+                $max = config('rateLimits.citizen' , 25);
+                return Limit::perMinute(25)->by($baseKey);
+            }
+            return Limit::perMinute(10)->by($baseKey);
         });
     }
 }
