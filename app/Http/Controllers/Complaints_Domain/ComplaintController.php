@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Complaints_Domain;
 
+use App\Http\Controllers\Controller;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 
 class ComplaintController extends Controller
 {

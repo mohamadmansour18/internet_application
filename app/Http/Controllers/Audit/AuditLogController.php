@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Audit;
 
+use App\Http\Controllers\Controller;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {

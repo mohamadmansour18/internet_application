@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Agency_Domain;
 
+use App\Http\Controllers\Controller;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
 
 class AgencyController extends Controller
 {
