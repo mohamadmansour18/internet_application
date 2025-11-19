@@ -51,6 +51,12 @@ class RouteServiceProvider extends ServiceProvider
             return Limit::perMinute($max)->by($key);
         });
 
+        RateLimiter::for('registerApi' , function (Request $request) {
+            $key = 'login:' . ($request->ip());
+            $max = config('rateLimits.registerApi' , 3);
+            return Limit::perMinute($max)->by($key);
+        });
+
         RateLimiter::for('roleBasedApi' , function (Request $request) {
             $user = $request->user();
             $baseKey = $user ? 'user:' . $user->id : 'ip:' . $request->ip();

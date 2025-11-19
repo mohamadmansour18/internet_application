@@ -18,6 +18,7 @@ class ComplaintStatusHistory extends Model
         'complaint-id',
         'changed_by',
         'status',
+        'note',
     ];
 
     protected $casts = [

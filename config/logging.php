@@ -58,6 +58,12 @@ return [
             'ignore_exceptions' => false,
         ],
 
+        'aspect' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/aspect.log'),
+            'level' => 'info'
+        ],
+
         'single' => [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),

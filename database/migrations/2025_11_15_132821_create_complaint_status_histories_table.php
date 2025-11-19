@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('complaint-id')->constrained('complaints')->onDelete('cascade');
             $table->foreignId('changed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('status' , ComplaintCurrentStatus::convertEnumToArray())->nullable();
+            $table->string('note')->nullable();
             $table->timestamps();
         });
     }

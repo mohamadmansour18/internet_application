@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('otp_code' , 6);
-            $table->timestamp('expires_at');
+            $table->dateTime('expires_at');
             $table->boolean('is_used')->default(0);
             $table->enum('purpose' , OtpCodePurpose::convertEnumToArray())->default(OtpCodePurpose::Verification->value);
             $table->timestamps();

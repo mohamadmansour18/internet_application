@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,14 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::prefix('/v1/citizen')->group(function () {
+    Route::post('/register' , [UserController::class , 'registerCitizen'])->middleware('throttle:registerApi');
+
+    Route::middleware("auth:api" )->middleware("role:citizen")->group(function () {
+
+    });
+});
 
 /*
  * Route::get('/search', ...)
