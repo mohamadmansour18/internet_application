@@ -34,7 +34,9 @@ class SendOtpMail extends Mailable
                 subject: 'رمز التحقق الخاص بك لتأكيد بريدك الالكتروني',
             );
         } else {
-            return new Envelope('رمز التحقق الخاص بك لاعادة تعين كلمة المرور');
+            return new Envelope(
+                subject: 'رمز التحقق الخاص بك لاعادة تعين كلمة المرور'
+            );
         }
     }
 

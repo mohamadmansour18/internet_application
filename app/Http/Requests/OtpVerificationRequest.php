@@ -3,11 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Rules\AllowedEmailDomain;
-use App\Rules\ArabicOnly;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password as password_rule;
 
-class RegisterCitizenRequest extends FormRequest
+class OtpVerificationRequest extends FormRequest
 {
     protected $stopOnFirstFailure = true ;
     /**
@@ -26,10 +24,8 @@ class RegisterCitizenRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', new ArabicOnly() , 'max:255'],
-            'email' => ['required' , 'email' , 'string' , 'unique:users,email' , 'max:255' , new AllowedEmailDomain()],
-            'password' => ['required' , password_rule::min(6)->numbers()->letters()],
-            'national_number' => ['required' , 'digits:11' , 'unique:citizen_profiles,national_number' , 'max:11'],
+            'email' => ['required' , 'email' , 'exists:users,email' , new AllowedEmailDomain()] ,
+            'otp_code' => 'required|digits:6'
         ];
     }
 }

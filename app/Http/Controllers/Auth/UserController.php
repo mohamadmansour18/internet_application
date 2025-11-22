@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\OtpCodePurpose;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginCitizenRequest;
+use App\Http\Requests\OtpVerificationRequest;
 use App\Http\Requests\RegisterCitizenRequest;
+use App\Http\Requests\ResendOtpRequest;
+use App\Http\Requests\ResetPasswordRequest;
 use App\Services\Contracts\AuthServiceInterface;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -37,7 +43,59 @@ class UserController extends Controller
 
         return $this->dataResponse(
             data: $result ,
-            statusCode: 200
         );
+    }
+
+    public function verifyRegistrationCitizen(OtpVerificationRequest $request): JsonResponse
+    {
+        $this->authService->verifyRegistration($request->validated());
+
+        return $this->successResponse("تم تأكيد حسابك على تطبيق تواصل بنجاح");
+    }
+
+    public function resendOtp(ResendOtpRequest $request): JsonResponse
+    {
+        $this->authService->resendOtp($request->validated()['email'] , OtpCodePurpose::Verification->value);
+
+        return $this->successResponse('تم إرسال رمز تحقق جديد إلى بريدك' , 200);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+    {
+        $this->authService->forgotPassword($request->validated()['email']);
+
+        return $this->successResponse("تم إرسال رمز التحقق إلى بريدك الإلكتروني المدخل" , 200);
+    }
+
+    public function verifyForgotPasswordEmail(OtpVerificationRequest $request): JsonResponse
+    {
+        $this->authService->verifyForgotPasswordEmail($request->validated());
+
+        return $this->successResponse("تم تأكيد بريدك الالكتروني المستخدم لاعادة تعين كلمة المرور" , 200);
+    }
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $this->authService->resetPassword($request->validated());
+
+        return $this->successResponse('تم تعيين كلمة المرور الجديدة بنجاح ، يمكنك تسجيل الدخول الآن' , 201);
+    }
+
+    public function resendPasswordResetOtp(ResendOtpRequest $request): JsonResponse
+    {
+        $this->authService->resendOtp($request->validated()['email'] , OtpCodePurpose::Reset->value);
+
+        return $this->successResponse('تم إرسال رمز تحقق جديد إلى بريدك' , 200);
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
+    public function logout(): JsonResponse
+    {
+        JWTAuth::invalidate(JWTAuth::getToken());
+
+        return $this->successResponse("تم تسجيل الخروج من حسابك بنجاح ، شكرا لاستخدامك تطبيق تواصل" , 200);
     }
 }

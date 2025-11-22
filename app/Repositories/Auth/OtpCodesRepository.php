@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Auth;
 
+use App\Enums\OtpCodePurpose;
 use App\Models\OtpCodes;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,5 +17,13 @@ class OtpCodesRepository
             'is_used' => false ,
             'purpose' => $purpose
         ]);
+    }
+
+    public function getLatestOtp(int $userId , string $purpose): ?OtpCodes
+    {
+        return OtpCodes::where('user_id', $userId)
+            ->where('purpose' , $purpose)
+            ->latest('id')
+            ->first();
     }
 }

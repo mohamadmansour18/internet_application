@@ -60,7 +60,13 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('registerApi' , function (Request $request) {
             $key = 'register:' . ($request->ip());
             $max = config('rateLimits.registerApi' , 3);
-            return Limit::perMinute(5)->by($key);
+            return Limit::perMinute($max)->by($key);
+        });
+
+        RateLimiter::for('forgotPasswordApi' , function (Request $request) {
+            $key = 'forgotPassword:' . ($request->ip());
+            $max = config('rateLimits.forgotPasswordApi' , 4);
+            return Limit::perMinute($max)->by($key);
         });
 
         RateLimiter::for('roleBasedApi' , function (Request $request) {
