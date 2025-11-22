@@ -104,8 +104,8 @@
 <body>
 <div class="container">
     <h2>مرحبًا {{ $name }}</h2>
-    <p>رمز التحقق الخاص بك :</p>
-    <div class="otp">{{ $otp }}</div>
+    <p>: رمز التحقق الخاص بك</p>
+    <div class="otp">{{ $code }}</div>
     <p>يرجى استخدام هذا الرمز خلال <strong>5 دقائق</strong> لضمان الأمان</p>
     <p>نحن سعداء بانضمامك إلى {{ config('app.name') }}</p>
 

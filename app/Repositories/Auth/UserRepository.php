@@ -2,7 +2,10 @@
 
 namespace App\Repositories\Auth;
 
+use App\Models\FailedLogin;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class UserRepository
@@ -15,4 +18,18 @@ class UserRepository
             return $user->fresh('citizenProfile');
         });
     }
+
+    public function findByEmail(string $email): User
+    {
+        return User::where('email' , $email)->first();
+    }
+
+    public function updateLastLoginAt(User $user): void
+    {
+        $user->last_login_at = now();
+        $user->save();
+    }
+
+
+
 }

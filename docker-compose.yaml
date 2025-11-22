@@ -99,6 +99,17 @@ services:
       timeout: 2s
       retries: 15
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    volumes:
+      - "sail-redisinsight:/data"
+    networks:
+      - sail
+    depends_on:
+      - redis
+
 networks:
   sail:
     driver: bridge
@@ -109,4 +120,6 @@ volumes:
   sail-mysql:
     driver: local
   sail-meilisearch:
+    driver: local
+  sail-redisinsight:
     driver: local

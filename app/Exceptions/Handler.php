@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
@@ -61,6 +62,14 @@ class Handler extends ExceptionHandler
             $retryAfter = $headers['Retry-After'] ?? null;
 
             return $this->errorResponse(" الكثير من المحاولات ، قم بالمحاولة مرة اخرى بعد $retryAfter ثانية " , 429);
+        });
+
+        $this->renderable(function (ModelNotFoundException $e , $request){
+            if(!$request->is('api/*'))
+            {
+                return null;
+            }
+            return $this->errorResponse('العنصر الذي تحاول الوصول اليه غير موجود في النظام' , 404);
         });
     }
 }

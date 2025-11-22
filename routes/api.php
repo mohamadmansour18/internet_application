@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/v1/citizen')->group(function () {
     Route::post('/register' , [UserController::class , 'registerCitizen'])->middleware('throttle:registerApi');
+    Route::post('/login' , [UserController::class , 'loginCitizen'])->middleware('throttle:loginApi');
 
     Route::middleware("auth:api" )->middleware("role:citizen")->group(function () {
 

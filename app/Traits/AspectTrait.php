@@ -11,11 +11,11 @@ trait AspectTrait
     protected function around(
         string $action ,
         array $context ,
-        callable $callback ,
         callable $before = null ,
+        callable $callback = null ,
         callable $after = null,
-        callable $onError = null ,
         callable $audit = null ,
+        callable $onError = null ,
         bool $withTiming = false ,
         bool $withLogging = false ,
     ){
