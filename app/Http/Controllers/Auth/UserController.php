@@ -94,8 +94,19 @@ class UserController extends Controller
 
     public function logout(): JsonResponse
     {
-        JWTAuth::invalidate(JWTAuth::getToken());
+
+        auth('api')->logout();
 
         return $this->successResponse("تم تسجيل الخروج من حسابك بنجاح ، شكرا لاستخدامك تطبيق تواصل" , 200);
+    }
+
+    public function refresh(): JsonResponse
+    {
+        $newToken = JWTAuth::parseToken()->refresh();
+
+        return $this->dataResponse([
+            'newToken' => $newToken,
+            'expires_in' => JWTAuth::factory()->getTTL() * 60,
+        ],200);
     }
 }

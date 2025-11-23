@@ -86,6 +86,7 @@ class AuthServiceAspect implements AuthServiceInterface
 
         return [
             'token' => $result['token'],
+            'expires_in' => $result['expires_in'],
             'name' => TextHelper::fixBidi("مرحبا صديقي المواطن {$result['user']->name}")
         ];
     }

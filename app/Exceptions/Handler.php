@@ -3,10 +3,14 @@
 namespace App\Exceptions;
 
 use App\Traits\ApiResponse;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Validation\ValidationException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenBlacklistedException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class Handler extends ExceptionHandler
@@ -71,5 +75,29 @@ class Handler extends ExceptionHandler
             }
             return $this->errorResponse('العنصر الذي تحاول الوصول اليه غير موجود في النظام' , 404);
         });
+
+        // JWT: token Expired
+        $this->renderable(function (TokenExpiredException $e, $request) {
+            if (!$request->is('api/*')) {
+                return null;
+            }
+            return $this->errorResponse('token_expired', 401);
+        });
+
+        $this->renderable(function (TokenBlacklistedException $e, $request) {
+            if (!$request->is('api/*')) return null;
+            return $this->errorResponse('token_blacklisted', 401);
+        });
+
+
+        // JWT: token invalid (manipulated / wrong signature / etc.)
+        $this->renderable(function (TokenInvalidException $e, $request) {
+            if (!$request->is('api/*')) {
+                return null;
+            }
+            return $this->errorResponse('token_invalid', 401);
+        });
+
     }
+
 }

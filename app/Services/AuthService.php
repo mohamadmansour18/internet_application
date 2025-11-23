@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\OtpCodePurpose;
 use App\Enums\UserRole;
 use App\Exceptions\ApiException;
-use App\Exceptions\RegistrationException;
 use App\Jobs\FailedLogin;
 use App\Repositories\Auth\FailedLoginRepository;
 use App\Repositories\Auth\OtpCodesRepository;
@@ -90,6 +89,7 @@ class AuthService implements AuthServiceInterface
 
         return [
             'token' => $token,
+            'expires_in' => JWTAuth::factory()->getTTL() * 60,
             'user' => $user
         ];
     }

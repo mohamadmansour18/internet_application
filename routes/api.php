@@ -32,11 +32,13 @@ Route::prefix('/v1/citizen')->group(function () {
 
     });
 
-    Route::middleware("auth:api" )->middleware("role:citizen")->middleware("throttle:roleBasedApi")->group(function () {
+    /** @noinspection PhpParamsInspection */
+    Route::middleware(['jwt' ,'role:citizen' , 'throttle:roleBasedApi'])->group(function () {
         Route::get('/logout' , [UserController::class , 'logout']);
     });
 });
 
+Route::post('/refresh' , [UserController::class , 'refresh'])->middleware('jwt.refresh');
 
 /*
  * Route::get('/search', ...)
