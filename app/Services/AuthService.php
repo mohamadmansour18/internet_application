@@ -131,7 +131,7 @@ class AuthService implements AuthServiceInterface
     {
         $user = $this->userRepository->findByEmail($email);
 
-        if($user->email_verified_at)
+        if($user->email_verified_at && $purpose === OtpCodePurpose::Verification->value)
         {
             throw new ApiException('عزيزي المستخدم لقد تم تأكيد بريدك الالكتروني مسبقا' , 422);
         }
