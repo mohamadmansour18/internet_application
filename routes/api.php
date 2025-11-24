@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\UserController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -28,7 +27,7 @@ Route::prefix('/v1/citizen')->group(function () {
         Route::post('/forgotPassword' , [UserController::class , 'forgotPassword']);
         Route::post('/verifyForgotPasswordEmail' , [UserController::class , 'verifyForgotPasswordEmail']);
         Route::post('/resetPassword' , [UserController::class , 'resetPassword']);
-        Route::post('/resendPasswordResetOtp' , [UserController::class . 'resendPasswordResetOtp']);
+        Route::post('/resendPasswordResetOtp' , [UserController::class , 'resendPasswordResetOtp']);
 
     });
 
