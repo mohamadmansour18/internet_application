@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Agency_Domain\AgencyController;
 use App\Http\Controllers\Auth\UserController;
+use App\Http\Controllers\Complaints_Domain\ComplaintController;
+use App\Http\Controllers\Complaints_Domain\ComplaintTypeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +37,23 @@ Route::prefix('/v1/citizen')->group(function () {
     /** @noinspection PhpParamsInspection */
     Route::middleware(['jwt' ,'role:citizen' , 'throttle:roleBasedApi'])->group(function () {
         Route::get('/logout' , [UserController::class , 'logout']);
+
+        Route::prefix('/home')->group(function () {
+
+            Route::post('/showComplaints' , [ComplaintController::class , 'getCitizenComplaints']);
+            Route::post('/searchComplaint' , [ComplaintController::class , 'SearchComplaint']);
+
+            Route::post('/createComplain' , [ComplaintController::class , 'createCitizenComplaint']);
+            Route::get('/agencyByName' , [AgencyController::class , 'agencies']);
+            Route::get('/ComplaintTypeByName' , [ComplaintTypeController::class , 'complaintTypes']);
+        });
+
+        Route::prefix('/complaint')->group(function () {
+
+            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'getCitizenComplaintDetails']);
+
+        });
+
     });
 });
 

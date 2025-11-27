@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('description');
             $table->string('location_text');
             $table->enum('current_status' , ComplaintCurrentStatus::convertEnumToArray())->default(ComplaintCurrentStatus::NEW->value);
+            $table->unsignedBigInteger('number')->unique();
             $table->timestamps();
         });
     }

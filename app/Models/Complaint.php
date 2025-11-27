@@ -23,7 +23,8 @@ class Complaint extends Model
         'title',
         'description',
         'location_text',
-        'current_status'
+        'current_status',
+        'number'
     ];
 
     protected $casts = [

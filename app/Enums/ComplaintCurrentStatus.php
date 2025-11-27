@@ -7,8 +7,8 @@ enum ComplaintCurrentStatus: string
 {
     use EnumToArray;
 
-    case NEW = 'new';
-    case IN_PROGRESS = 'in progress';
-    case DONE = 'done';
-    case REJECTED = 'rejected';
+    case NEW = 'معلقة';
+    case IN_PROGRESS = 'قيد المعالجة';
+    case DONE = 'تم معالجتها';
+    case REJECTED = 'تم رفضها';
 }

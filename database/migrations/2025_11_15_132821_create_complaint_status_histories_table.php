@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('complaint_status_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('complaint-id')->constrained('complaints')->onDelete('cascade');
+            $table->foreignId('complaint_id')->constrained('complaints')->onDelete('cascade');
             $table->foreignId('changed_by')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('status' , ComplaintCurrentStatus::convertEnumToArray())->nullable();
             $table->string('note')->nullable();

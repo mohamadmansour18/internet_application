@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\ApiException;
 use Closure;
 use Illuminate\Http\Request;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -16,6 +17,11 @@ class JwtAuthenticate
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if(!$request->bearerToken())
+        {
+            throw new ApiException("لم تقم بارسال توكين لي في الهيدر ايها الفرونت المغفل" , 401);
+        }
+
         JWTAuth::parseToken()->authenticate();
 
         return $next($request);

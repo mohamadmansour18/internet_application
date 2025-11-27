@@ -15,7 +15,7 @@ class ComplaintStatusHistory extends Model
     protected $table = 'complaint_status_histories';
 
     protected $fillable = [
-        'complaint-id',
+        'complaint_id',
         'changed_by',
         'status',
         'note',

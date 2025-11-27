@@ -127,6 +127,13 @@ return [
         'otp_code' => 'رمز التحقق',
         'governorate' => 'مكان الإقامة',
         'token' => 'رمز المصادقة',
-        'national_number' => 'الرقم الوطني'
+        'national_number' => 'الرقم الوطني',
+        'search' => 'البحث',
+        'agency_id' => 'الجهة الحكومية',
+        'complaint_type_id' => 'نوع الشكوى',
+        'title' => 'عنوان الشكوى',
+        'description' => 'وصف الشكوى',
+        'location_text' => 'موقع الشكوى',
+        'attachments' => 'المرفقات',
     ],
 ];
