@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'fcm' => [
+        'credentials_file' => 'storage/firebase/fireBaseService.json',
+    ]
+
 ];

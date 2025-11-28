@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Agency_Domain\AgencyController;
+use App\Http\Controllers\Audit\NotificationController;
 use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\Complaints_Domain\ComplaintController;
 use App\Http\Controllers\Complaints_Domain\ComplaintTypeController;
@@ -55,6 +56,7 @@ Route::prefix('/v1/citizen')->group(function () {
 
         });
 
+        Route::get('/Notification' , [NotificationController::class , 'getCitizenNotifications']);
     });
 });
 
