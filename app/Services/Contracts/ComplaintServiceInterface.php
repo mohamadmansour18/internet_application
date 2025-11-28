@@ -11,4 +11,5 @@ interface ComplaintServiceInterface
     public function SearchComplaint(int $citizenId , int $number): array;
     public function createCitizenComplaint(int $citizenId, array $data , array $attachments = []): Complaint;
     public function getCitizenComplaintDetails(int $citizenId, int $complaintId): array ;
+    public function deleteCitizenComplaint(int $complaintId): void;
 }

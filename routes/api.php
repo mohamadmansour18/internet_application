@@ -51,6 +51,7 @@ Route::prefix('/v1/citizen')->group(function () {
         Route::prefix('/complaint')->group(function () {
 
             Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'getCitizenComplaintDetails']);
+            Route::delete('/delete/{complain_id}' , [ComplaintController::class , 'deleteComplaint']);
 
         });
 

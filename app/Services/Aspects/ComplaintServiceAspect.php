@@ -130,4 +130,40 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             withLogging: true,
         );
     }
+
+    public function deleteCitizenComplaint(int $complaintId): void
+    {
+         $citizenId = Auth::id();
+
+         $this->around(
+            action: 'complaints.delete',
+            context: [
+                'citizen_id'   => $citizenId,
+                'complaint_id' => $complaintId,
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+            before: function () use ($citizenId) {
+                if (! Auth::check() || Auth::id() !== $citizenId) {
+                    throw new ApiException('غير مصرح لك بحذف هذه الشكوى', 403);
+                }
+            },
+            callback: fn() => $this->inner->deleteCitizenComplaint($complaintId),
+            after: function () use ($citizenId, $complaintId) {
+                Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
+                Cache::tags(["complaint:{$complaintId}"])->flush();
+            },
+            audit: function () use ($citizenId, $complaintId) {
+                return [
+                    'actor_id'     => $citizenId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaintId,
+                    'changes'      => [
+                        'action' => 'delete_complaint_soft',
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\ComplaintCurrentStatus;
 use App\Exceptions\ApiException;
 use App\Helpers\StorageUrlHelper;
 use App\Models\Complaint;
+use App\Repositories\Complaints_Domain\AttachmentRepository;
 use App\Repositories\Complaints_Domain\ComplaintRepository;
 use App\Repositories\Complaints_Domain\ComplaintTypeRepository;
 use App\Services\Contracts\ComplaintServiceInterface;
@@ -16,6 +18,7 @@ class ComplaintService implements ComplaintServiceInterface
     public function __construct(
         private readonly ComplaintRepository $complaintRepository,
         private readonly ComplaintTypeRepository $complaintTypeRepository,
+        private readonly AttachmentRepository $attachmentRepository,
     )
     {}
 
@@ -107,5 +110,22 @@ class ComplaintService implements ComplaintServiceInterface
             'complaint_info' => $complaintInfo,
             'history'        => $history,
         ];
+    }
+
+    public function deleteCitizenComplaint(int $complaintId): void
+    {
+        $complaint = $this->attachmentRepository->getCitizenComplaintWithAttachment($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException("العنصر الذي تحاول الوصول الى تفاصيله غير موجود اساسا" , 404);
+        }
+
+        if($complaint->current_status === ComplaintCurrentStatus::IN_PROGRESS)
+        {
+            throw new ApiException("لايمكن حذف شكوى حالتها قيد المعالجة" , 422);
+        }
+
+        $this->attachmentRepository->softDeleteComplaintWithAttachment($complaint);
     }
 }

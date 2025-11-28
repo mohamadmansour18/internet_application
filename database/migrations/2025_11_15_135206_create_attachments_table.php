@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('complaint_id')->constrained('complaints')->onDelete('cascade');
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->onDelete('set null');
             $table->string('path');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

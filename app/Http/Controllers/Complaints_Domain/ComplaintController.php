@@ -68,4 +68,11 @@ class ComplaintController extends Controller
 
         return $this->dataResponse(data: $data , statusCode: 200);
     }
+
+    public function deleteComplaint(int $complaintId): JsonResponse
+    {
+        $this->complaintService->deleteCitizenComplaint($complaintId);
+
+        return $this->successResponse("عزيزي المواطن تم حذف هذه الشكوى بنجاح" , 200);
+    }
 }
