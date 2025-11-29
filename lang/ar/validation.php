@@ -135,5 +135,7 @@ return [
         'description' => 'وصف الشكوى',
         'location_text' => 'موقع الشكوى',
         'attachments' => 'المرفقات',
+        'extra_text' => 'وصف اضافي',
+        'extra_attachment' => 'مرفق اضافي',
     ],
 ];

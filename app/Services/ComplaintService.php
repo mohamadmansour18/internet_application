@@ -12,6 +12,7 @@ use App\Repositories\Complaints_Domain\ComplaintTypeRepository;
 use App\Services\Contracts\ComplaintServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 
 class ComplaintService implements ComplaintServiceInterface
 {
@@ -127,5 +128,39 @@ class ComplaintService implements ComplaintServiceInterface
         }
 
         $this->attachmentRepository->softDeleteComplaintWithAttachment($complaint);
+    }
+
+    public function addExtraInfoToComplaint(int $complaintId , int $citizenId , ?string $extraText, ?UploadedFile $extraAttachment): void
+    {
+        $complaint = $this->complaintRepository->findCitizenComplaint($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException("العنصر الذي تحاول الوصول الى تفاصيله غير موجود اساسا" , 404);
+        }
+
+        if($complaint->current_status !== ComplaintCurrentStatus::NEED_INFORMATION)
+        {
+            throw new ApiException("لا يمكنك إضافة معلومات إضافية إلا إذا كانت حالة الشكوى تحتاج إلى معلومات إضافية" , 422);
+        }
+
+        if($complaint->has_extra_info)
+        {
+            throw new ApiException("لقد قمت مسبقًا بإضافة معلومات إضافية لهذه الشكوى" , 422);
+        }
+
+        $attachmentPayload = null;
+
+        if ($extraAttachment instanceof UploadedFile)
+        {
+            $storedPath = $extraAttachment->store('complaints' , 'public');
+
+            $attachmentPayload = [
+                'uploaded_by' => $citizenId,
+                'path' => $storedPath,
+            ];
+        }
+
+        $this->complaintRepository->addExtraInfo($complaint , $extraText , $attachmentPayload);
     }
 }

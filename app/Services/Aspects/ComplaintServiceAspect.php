@@ -7,6 +7,7 @@ use App\Models\Complaint;
 use App\Services\Contracts\ComplaintServiceInterface;
 use App\Traits\AspectTrait;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -159,6 +160,39 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     'subject_id'   => $complaintId,
                     'changes'      => [
                         'action' => 'delete_complaint_soft',
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    public function addExtraInfoToComplaint(int $complaintId, int $citizenId, ?string $extraText, ?UploadedFile $extraAttachment): void
+    {
+        $this->around(
+            action: 'complaints.add_extra_info',
+            context: [
+                'citizen_id'   => $citizenId,
+                'complaint_id' => $complaintId,
+                'has_text'     => ! empty($extraText),
+                'has_attachment' => $extraAttachment instanceof UploadedFile,
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+            callback: fn() => $this->inner->addExtraInfoToComplaint($complaintId, $citizenId, $extraText, $extraAttachment),
+            after: function () use ($citizenId , $complaintId) {
+                Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
+                Cache::tags(["complaint:{$complaintId}"])->flush();
+            },
+            audit: function () use ($citizenId, $complaintId, $extraText, $extraAttachment) {
+                return [
+                    'actor_id'     => $citizenId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaintId,
+                    'changes'      => [
+                        'action'          => 'add_extra_info',
+                        'has_text'        => ! empty($extraText),
+                        'has_attachment'  => $extraAttachment instanceof UploadedFile,
                     ],
                 ];
             },

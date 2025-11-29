@@ -53,7 +53,7 @@ Route::prefix('/v1/citizen')->group(function () {
 
             Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'getCitizenComplaintDetails']);
             Route::delete('/delete/{complain_id}' , [ComplaintController::class , 'deleteComplaint']);
-
+            Route::post('/addDetails/{complain_id}' , [ComplaintController::class , 'addExtraInfoToComplaint']);
         });
 
         Route::get('/Notification' , [NotificationController::class , 'getCitizenNotifications']);

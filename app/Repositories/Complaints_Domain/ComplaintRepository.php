@@ -7,6 +7,7 @@ namespace App\Repositories\Complaints_Domain;
 use App\Enums\ComplaintCurrentStatus;
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +78,27 @@ class ComplaintRepository
                 ->with(['attachments:id,complaint_id,path' , 'complaintHistories:id,complaint_id,status,note,created_at'])
                 ->where('id' , $complaintId)
                 ->first();
+        });
+    }
+
+    public function findCitizenComplaint(int $complaintId): Model|Builder|null
+    {
+        return Complaint::query()->where('id' , $complaintId)->first();
+    }
+
+    public function addExtraInfo(mixed $complaint , ?string $extraText , ?array $attachmentPayload): void
+    {
+        DB::transaction(function () use ($complaint, $extraText, $attachmentPayload) {
+
+            $complaint->extra = $extraText ;
+
+            if(!empty($attachmentPayload))
+            {
+                $complaint->attachments()->create($attachmentPayload);
+            }
+
+            $complaint->has_extra_info = true ;
+            $complaint->save();
         });
     }
 }

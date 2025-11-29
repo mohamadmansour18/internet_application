@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Complaints_Domain;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateComplaintRequest;
+use App\Http\Requests\ExtraInformationComplaintRequest;
 use App\Http\Requests\PaginateRequest;
 use App\Http\Requests\SearchComplaintByNumberRequest;
 use App\Models\Complaint;
@@ -74,5 +75,17 @@ class ComplaintController extends Controller
         $this->complaintService->deleteCitizenComplaint($complaintId);
 
         return $this->successResponse("عزيزي المواطن تم حذف هذه الشكوى بنجاح" , 200);
+    }
+
+    public function addExtraInfoToComplaint(ExtraInformationComplaintRequest $request , int $complaintId): JsonResponse
+    {
+        $citizenId = Auth::id();
+
+        $extraText = $request->input("extra_text");
+        $extraAttachment = $request->file('extra_attachment');
+
+        $this->complaintService->addExtraInfoToComplaint($complaintId , $citizenId, $extraText, $extraAttachment);
+
+        return $this->successResponse("تم ارسال المعلومات الاضافية لهذه الشكوى بنجاح" , 201);
     }
 }

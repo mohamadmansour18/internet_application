@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('location_text');
             $table->enum('current_status' , ComplaintCurrentStatus::convertEnumToArray())->default(ComplaintCurrentStatus::NEW->value);
             $table->unsignedBigInteger('number')->unique();
+            $table->text('extra')->nullable();
+            $table->boolean('has_extra_info')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });

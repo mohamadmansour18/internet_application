@@ -4,6 +4,7 @@ namespace App\Services\Contracts;
 
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 
 interface ComplaintServiceInterface
 {
@@ -12,4 +13,5 @@ interface ComplaintServiceInterface
     public function createCitizenComplaint(int $citizenId, array $data , array $attachments = []): Complaint;
     public function getCitizenComplaintDetails(int $citizenId, int $complaintId): array ;
     public function deleteCitizenComplaint(int $complaintId): void;
+    public function addExtraInfoToComplaint(int $complaintId , int $citizenId , ?string $extraText , ?UploadedFile $extraAttachment): void;
 }
