@@ -44,7 +44,7 @@ class ComplaintRepository
     {
 
         return DB::transaction(function () use ($citizenId, $data, $attachments) {
-            $lastNumber = Complaint::query()->lockForUpdate()->max('number');
+            $lastNumber = Complaint::withTrashed()->lockForUpdate()->max('number');
             $nextNumber = $lastNumber ? $lastNumber + 1 : 1;
 
             $complaint = Complaint::query()->create([
