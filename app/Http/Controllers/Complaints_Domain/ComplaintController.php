@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Complaints_Domain;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ComplaintNoteRequest;
 use App\Http\Requests\CreateComplaintRequest;
 use App\Http\Requests\ExtraInformationComplaintRequest;
 use App\Http\Requests\PaginateRequest;
@@ -107,5 +108,23 @@ class ComplaintController extends Controller
         $data = $this->complaintService->ComplaintDetails($complaintId);
 
         return $this->dataResponse(data: $data , statusCode: 200);
+    }
+
+    public function StartProcessingComplaint(ComplaintNoteRequest $request , int $complaintId): JsonResponse
+    {
+        $userId = Auth::id();
+
+        $this->complaintService->StartProcessingComplaint($userId , $complaintId , $request->input('note'));
+
+        return $this->successResponse("تمت العملية بنجاح والشكوى الان في حالة قيد المعالجة" , 200);
+    }
+
+    public function rejectComplaint(ComplaintNoteRequest $request , int $complaintId): JsonResponse
+    {
+        $userId = Auth::id();
+
+        $this->complaintService->rejectComplaint($userId , $complaintId , $request->input('note'));
+
+        return $this->successResponse("تمت العملية بنجاح والشكوى تم رفضها" , 200);
     }
 }

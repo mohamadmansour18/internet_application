@@ -2,7 +2,10 @@
 
 namespace App\Services\Aspects;
 
+use App\Enums\ComplaintCurrentStatus;
+use App\Events\FcmNotificationRequested;
 use App\Exceptions\ApiException;
+use App\Helpers\TextHelper;
 use App\Models\Complaint;
 use App\Models\User;
 use App\Services\Contracts\ComplaintServiceInterface;
@@ -264,4 +267,86 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             withLogging: true,
         );
     }
+
+    public function StartProcessingComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        return $this->around(
+            action: 'complaints.start_processing',
+            context: [
+                'officer_id'   => $userId,
+                'complaint_id' => $complaintId,
+                'has_note'     => ! empty($note),
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+
+            callback: fn () => $this->inner->startProcessingComplaint($userId, $complaintId, $note),
+            after: function (Complaint $complaint) use ($userId , $complaintId) {
+
+                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم وضع الشكوى الخاصة بك ذو الرقم {$complaint->number} قيد المعالجة"));
+
+                Cache::tags([
+                    "citizen:{$complaint->citizen_id}:complaints",
+                    "complaint:{$complaintId}",
+                    "dashboard:admin:complaints",
+                    "dashboard:officer:{$userId}:complaints",
+                ])->flush();
+            },
+            audit: function (Complaint $complaint) use ($userId, $note) {
+                return [
+                    'actor_id'     => $userId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaint->id,
+                    'changes'      => [
+                        'action'         => 'set_under_processing',
+                        'new_status'     => ComplaintCurrentStatus::IN_PROGRESS->value,
+                        'previous_status'=> ComplaintCurrentStatus::NEW->value,
+                        'has_note'       => ! empty($note),
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    public function rejectComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        return $this->around(
+            action: 'complaints.reject',
+            context: [
+                'officer_id'   => $userId,
+                'complaint_id' => $complaintId,
+                'has_note'     => ! empty($note),
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+
+            callback: fn () => $this->inner->rejectComplaint($userId, $complaintId, $note),
+            after: function (Complaint $complaint) use ($userId , $complaintId) {
+
+                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم رفض الشكوى الخاصة بك ذو الرقم {$complaint->number}"));
+
+                Cache::tags([
+                    "citizen:{$complaint->citizen_id}:complaints",
+                    "complaint:{$complaintId}",
+                    "dashboard:admin:complaints",
+                    "dashboard:officer:{$userId}:complaints",
+                ])->flush();
+            },
+            audit: function (Complaint $complaint) use ($userId, $note) {
+                return [
+                    'actor_id'     => $userId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaint->id,
+                    'changes'      => [
+                        'action'         => 'set_rejected',
+                        'new_status'     => ComplaintCurrentStatus::REJECTED->value,
+                        'has_note'       => ! empty($note),
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
 }

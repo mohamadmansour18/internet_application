@@ -92,6 +92,10 @@ Route::prefix('/v1/both')->group(function () {
         Route::prefix('/ComplaintManagement')->group(function () {
             Route::post('/getComplaint' , [ComplaintController::class , 'getComplaintBasedRole']);
             Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'ComplaintDetails']);
+
+            Route::post('/inProgress/{complain_id}' , [ComplaintController::class , 'StartProcessingComplaint']);
+            Route::post('/reject/{complain_id}' , [ComplaintController::class , 'rejectComplaint']);
+            Route::post('accept/{complain_id}' , [ComplaintController::class , '']);
         });
 
     });

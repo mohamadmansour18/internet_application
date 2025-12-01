@@ -137,5 +137,6 @@ return [
         'attachments' => 'المرفقات',
         'extra_text' => 'وصف اضافي',
         'extra_attachment' => 'مرفق اضافي',
+        'note' => 'ملاحظة'
     ],
 ];

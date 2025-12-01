@@ -6,6 +6,7 @@ namespace App\Repositories\Complaints_Domain;
 
 use App\Enums\ComplaintCurrentStatus;
 use App\Enums\UserRole;
+use App\Exceptions\ApiException;
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -149,4 +150,49 @@ class ComplaintRepository
                 ->first();
         });
     }
+
+    public function findComplaintById(int $complaintId): Model|Builder|null
+    {
+        return Complaint::query()->where('id' , $complaintId)->first();
+    }
+
+    public function startProcessComplaint(int $complaintId , int $userId , ?string $note = null)
+    {
+        return DB::transaction(function() use ($complaintId , $userId , $note){
+            $complaint = Complaint::query()->lockForUpdate()->where('id' , $complaintId)->first();
+
+            $complaint->assigned_officer_id = $userId;
+            $complaint->current_status = ComplaintCurrentStatus::IN_PROGRESS->value ;
+            $complaint->save();
+
+            $complaint->statusHistories()->create([
+                'status'     => ComplaintCurrentStatus::IN_PROGRESS->value,
+                'changed_by' => $userId,
+                'note'       => $note,
+            ]);
+
+            return $complaint->fresh();
+        });
+    }
+
+    public function rejectComplaint(int $complaintId , int $userId , ?string $note = null)
+    {
+        return DB::transaction(function() use ($complaintId , $userId , $note){
+            $complaint = Complaint::query()->lockForUpdate()->where('id' , $complaintId)->first();
+
+            $complaint->assigned_officer_id = $userId;
+            $complaint->current_status = ComplaintCurrentStatus::REJECTED->value ;
+            $complaint->save();
+
+            $complaint->statusHistories()->create([
+                'status'     => ComplaintCurrentStatus::REJECTED->value,
+                'changed_by' => $userId,
+                'note'       => $note,
+            ]);
+
+            return $complaint->fresh();
+        });
+    }
+
+
 }

@@ -228,4 +228,41 @@ class ComplaintService implements ComplaintServiceInterface
             'history'        => $history,
         ];
     }
+
+    public function StartProcessingComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        $complaint = $this->complaintRepository->findComplaintById($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException('الشكوى التي تحاول الوصول اليها غير موجودة', 404);
+        }
+
+        if($complaint->current_status->value !== ComplaintCurrentStatus::NEW->value)
+        {
+            throw new ApiException("لايمكنك معالجة شكوى حالتها ليست معلقة" , 422);
+        }
+
+        return $this->complaintRepository->startProcessComplaint($complaintId , $userId , $note);
+    }
+
+    public function rejectComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        $complaint = $this->complaintRepository->findComplaintById($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException('الشكوى التي تحاول الوصول اليها غير موجودة', 404);
+        }
+        if($complaint->current_status->value === ComplaintCurrentStatus::DONE->value)
+        {
+            throw new ApiException("لايمكنك رفض شكوى بعد ان تم معالجتها" , 422);
+        }
+        if($complaint->current_status->value === ComplaintCurrentStatus::REJECTED->value)
+        {
+            throw new ApiException("لايمكنك رفض شكوى هي اساسا مرفوضة" , 422);
+        }
+
+        return $this->complaintRepository->startProcessComplaint($complaintId , $userId , $note);
+    }
 }

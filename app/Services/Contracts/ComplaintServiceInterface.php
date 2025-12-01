@@ -19,6 +19,9 @@ interface ComplaintServiceInterface
     //---------------------------------<DASHBOARD>---------------------------------//
 
     public function getComplaintBasedRole(User $user , int $perPage = 10 , int $page = 1): LengthAwarePaginator;
-
     public function ComplaintDetails(int $complaintId): array;
+
+    public function StartProcessingComplaint(int $userId, int $complaintId, ?string $note = null): Complaint;
+    public function rejectComplaint(int $userId , int $complaintId , ?string $note = null): Complaint;
+
 }
