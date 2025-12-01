@@ -54,6 +54,11 @@ class AuthService implements AuthServiceInterface
 
         $user = $this->userRepository->findByEmail($data['email']);
 
+        if(!$user->is_active)
+        {
+            throw new ApiException("تم قفل حسابك لاسباب تتعلق بسياسة الاستخدام ، يرجى مراجعة وزارة الاتصالات للاستفسار عن الحساب" , 422);
+        }
+
         $maxAttempts  = 3;
         $decayMinutes = 5;
 
@@ -208,6 +213,57 @@ class AuthService implements AuthServiceInterface
         ]);
 
         return [
+            'user' => $user,
+        ];
+    }
+
+    //--------------------<DASHBOARD>--------------------//
+
+    public function loginForDashboard(array $data): array
+    {
+        $user = $this->userRepository->findOfficerOrAdminByEmail($data['email']);
+
+        if (!$user)
+        {
+            throw new ApiException("بيانات الادخال خاطئة" , 422);
+        }
+
+        $maxAttempts  = 3;
+        $decayMinutes = 5;
+
+        if(!Hash::check($data['password'] , $user->password))
+        {
+            $this->failedLoginRepository->recordFailedLogin($user , $data['ip'] , $data['user_agent']);
+
+            $recentFails = $this->failedLoginRepository->countRecentFailedLogins($user , $decayMinutes);
+
+            if($recentFails >= $maxAttempts)
+            {
+                FailedLogin::dispatch($user , [
+                    'ip_address'  => $data['ip'],
+                    'user_agent'  => $data['user_agent'],
+                    'occurred_at' => now()->toDateTimeString(),
+                ]);
+            }
+
+            throw new ApiException('بيانات تسجيل الدخول غير صحيحة', 401);
+        }
+
+        if(!$user->is_active)
+        {
+            throw new ApiException("لايمكنك الدخول الى حسابك لانه تم ايقاف هذا الحساب من قبل المشرف",422);
+        }
+
+        DB::transaction(function () use ($user){
+            $this->failedLoginRepository->clearFailedLogins($user);
+            $this->userRepository->updateLastLoginAt($user);
+        });
+
+        $token = JWTAuth::fromUser($user);
+
+        return [
+            'token' => $token,
+            'expires_in' => JWTAuth::factory()->getTTL() * 60,
             'user' => $user,
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
 use App\Exceptions\ApiException;
 use Closure;
 use Illuminate\Http\Request;
@@ -20,10 +21,22 @@ class Role
     {
         $user = auth('api')->user();
 
-        if(!$user || $user->role->value !== $role)
-        {
+        if (!$user) {
             throw new ApiException("غير مصرح لك بالدخول" , 403);
         }
+
+        if ($role === 'both') {
+            if (!in_array($user->role->value, [UserRole::MANAGER->value, UserRole::OFFICER->value])) {
+                throw new ApiException("غير مصرح لك بالدخول الى لوحة التحكم", 403);
+            }
+
+            return $next($request);
+        }
+
+        if ($user->role->value !== $role) {
+            throw new ApiException("غير مصرح لك بالدخول" , 403);
+        }
+
         return $next($request);
     }
 }

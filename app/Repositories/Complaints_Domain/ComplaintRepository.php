@@ -5,6 +5,7 @@ namespace App\Repositories\Complaints_Domain;
 
 
 use App\Enums\ComplaintCurrentStatus;
+use App\Enums\UserRole;
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -73,9 +74,9 @@ class ComplaintRepository
     {
         $cacheKey = "citizen:{$citizenId}:complaint:{$complaintId}:details";
 
-        return Cache::tags(['complaint:{$complaintId}'])->remember($cacheKey , now()->addHours(6) , function () use ($citizenId, $complaintId) {
+        return Cache::tags(['complaint:{$complaintId}'])->remember($cacheKey , now()->addHours(6) , function () use ($complaintId) {
             return Complaint::query()
-                ->with(['attachments:id,complaint_id,path' , 'complaintHistories:id,complaint_id,status,note,created_at'])
+                ->with(['attachments:id,complaint_id,path' , 'complaintHistories:id,complaint_id,status,note,created_at' , 'agency:id,name' , 'complaintType:id,name'])
                 ->where('id' , $complaintId)
                 ->first();
         });
@@ -99,6 +100,53 @@ class ComplaintRepository
 
             $complaint->has_extra_info = true ;
             $complaint->save();
+        });
+    }
+
+    //----------------------------------------<>----------------------------------------//
+
+    public function PaginateComplaintsForDashboard(string $role , int $userId , ?int $agencyId , int $perPage = 10 , int $page = 1): LengthAwarePaginator
+    {
+
+        if($role === UserRole::MANAGER->value)
+        {
+            $cacheTag = "dashboard:admin:complaints";
+        }else{
+            $cacheTag = "dashboard:officer:{$userId}:complaints";
+        }
+
+        return Cache::tags([$cacheTag])
+            ->remember("{$cacheTag}:p{$page}:pp{$perPage}" , now()->addMinutes(15) , function () use ($role , $userId , $agencyId , $perPage , $page) {
+
+                $query = Complaint::query()
+                    ->select(['id', 'title', 'description', 'number', 'current_status', 'created_at'])
+                    ->orderByDesc('created_at');
+
+                match($role) {
+                    UserRole::MANAGER->value => null,
+
+                    UserRole::OFFICER->value => $query->where(function ($q) use ($userId, $agencyId) {
+                        $q->where('assigned_officer_id', $userId)->where('agency_id', $agencyId)
+                            ->orWhere(function ($q2) use ($agencyId) {
+                                $q2->where('agency_id', $agencyId)->where('current_status', ComplaintCurrentStatus::NEW->value);
+                            });
+                    }),
+                    default => $query->whereRaw('1 = 0')
+                };
+
+                return $query->paginate($perPage, ['*'], 'page', $page);
+            });
+    }
+
+    public function getComplaintDetails(int $complaintId)
+    {
+        $cacheKey = "dashboard:complaint:{$complaintId}:details";
+
+        return Cache::tags(['complaint:{$complaintId}'])->remember($cacheKey , now()->addHours(6) , function () use ($complaintId) {
+            return Complaint::query()
+                ->with(['attachments:id,complaint_id,path' , 'complaintHistories' , 'agency:id,name' , 'assignOfficer:id,name' , 'complaintType:id,name'])
+                ->where('id' , $complaintId)
+                ->first();
         });
     }
 }

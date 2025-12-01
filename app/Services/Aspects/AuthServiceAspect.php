@@ -153,7 +153,7 @@ class AuthServiceAspect implements AuthServiceInterface
     public function forgotPassword(string $email): array
     {
          return $this->around(
-             action: 'auth.forgot_citizen_password',
+             action: 'auth.forgot_password',
              context: [
                  'email' => $email ,
                  'time' => now()->format('Y-m-d H:i:s'),
@@ -168,7 +168,7 @@ class AuthServiceAspect implements AuthServiceInterface
                      'subject_type' => User::class,
                      'subject_id'   => $result['user']->id,
                      'changes' => [
-                         'action' => 'forgot_citizen_password',
+                         'action' => 'forgot_password',
                          'email' => $email ?? null,
                          'otp' => $result['otp'] ?? null,
                      ]
@@ -195,7 +195,7 @@ class AuthServiceAspect implements AuthServiceInterface
                     'subject_type' => User::class,
                     'subject_id'   => $result['user']->id,
                     'changes' => [
-                        'action' => 'verify_forgot_password_email_citizen',
+                        'action' => 'verify_forgot_password_email',
                         'email' => $data['email'] ?? null,
                         'otp' => $result['otp'] ?? null,
                     ]
@@ -209,7 +209,7 @@ class AuthServiceAspect implements AuthServiceInterface
     public function resetPassword(array $data):array
     {
         return $this->around(
-            action: 'auth.citizen_reset_password',
+            action: 'auth.reset_password',
             context: [
                 'email' => $data['email'] ?? null,
                 'time' => now()->format('Y-m-d H:i:s'),
@@ -221,7 +221,7 @@ class AuthServiceAspect implements AuthServiceInterface
                     'subject_type' => User::class,
                     'subject_id'   => $result['user']->id,
                     'changes' => [
-                        'action' => 'citizen_reset_password',
+                        'action' => 'reset_password',
                         'email' => $data['email'] ?? null,
                     ]
                 ];
@@ -229,5 +229,41 @@ class AuthServiceAspect implements AuthServiceInterface
             withTiming: true,
             withLogging: true,
         );
+    }
+
+    //-----------------------<DASHBOARD>-----------------------//
+
+    public function loginForDashboard(array $data): array
+    {
+        $response = $this->around(
+            action: 'auth.dashboard_login',
+            context: [
+                'email' => $data['email'],
+                'time'  => now()->format('Y-m-d H:i:s'),
+                'ip'    => request()->ip(),
+            ],
+
+            callback: fn () => $this->inner->loginForDashboard($data),
+            audit: function (array $result) {
+                $user = $result['user'];
+                return [
+                    'actor_id'     => $user->id,
+                    'subject_type' => User::class,
+                    'subject_id'   => $user->id,
+                    'changes'      => [
+                        'action' => 'dashboard_login',
+                        'role'   => $user->role,
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+
+        return [
+            'token' => $response['token'],
+            'expires_in' => $response['expires_in'],
+            'role' => $response['user']->role,
+        ];
     }
 }

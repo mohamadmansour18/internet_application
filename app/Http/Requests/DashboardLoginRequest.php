@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\AllowedEmailDomain;
 use Illuminate\Foundation\Http\FormRequest;
 
-class LoginCitizenRequest extends FormRequest
+class DashboardLoginRequest extends FormRequest
 {
     protected $stopOnFirstFailure = true ;
     /**
@@ -24,9 +23,8 @@ class LoginCitizenRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required' , 'email' , 'exists:users,email' ] ,
-            'password' => ['required'],
-            'fcm_token' => ['nullable' , 'string']
+            'email' => ['required', 'email' , 'exists:users,email'],
+            'password' => ['required' , 'string'],
         ];
     }
 }

@@ -4,8 +4,10 @@ namespace App\Services\Aspects;
 
 use App\Exceptions\ApiException;
 use App\Models\Complaint;
+use App\Models\User;
 use App\Services\Contracts\ComplaintServiceInterface;
 use App\Traits\AspectTrait;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -193,6 +195,68 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                         'action'          => 'add_extra_info',
                         'has_text'        => ! empty($extraText),
                         'has_attachment'  => $extraAttachment instanceof UploadedFile,
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    //-------------------------------<DASHBOARD>-------------------------------//
+
+    public function getComplaintBasedRole(?Authenticatable $user , int $perPage = 10, int $page = 1): LengthAwarePaginator
+    {
+        return $this->around(
+            action: 'complaints.dashboard_index',
+            context: [
+                'user_id'    => Auth::id(),
+                'per_page'   => $perPage,
+                'page'       => $page,
+                'time'       => now()->format('Y-m-d H:i:s'),
+            ],
+            before: function () use ($user) {
+                if (! Auth::check() || Auth::id() !== $user->id) {
+                    throw new ApiException('غير مصرح لك بالوصول إلى هذه البيانات', 403);
+                }
+            },
+            callback: fn () => $this->inner->getComplaintBasedRole($user, $perPage, $page),
+
+            audit: function (LengthAwarePaginator $result) use ($user) {
+                return [
+                    'actor_id'     => Auth::id(),
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $user->id,
+                    'changes'      => [
+                        'action'       => 'view_dashboard_complaints',
+                        'role'         => $user->role,
+                        'returned'     => $result->count(),
+                        'current_page' => $result->currentPage(),
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    public function ComplaintDetails(int $complaintId): array
+    {
+        return $this->around(
+            action: 'complaints.details',
+            context: [
+                'complaint_id' => $complaintId,
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+            callback: fn () => $this->inner->ComplaintDetails($complaintId),
+            audit: function (array $result) use ($complaintId) {
+                return [
+                    'actor_id'     => Auth::id(),
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaintId,
+                    'changes'      => [
+                        'action'        => 'view_complaint_details',
+                        'history_count' => count($result['history']),
                     ],
                 ];
             },

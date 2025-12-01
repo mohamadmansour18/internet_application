@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Auth;
 
+use App\Enums\UserRole;
 use App\Models\FailedLogin;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,6 +31,13 @@ class UserRepository
         $user->save();
     }
 
+    //--------------------<DASHBOARD>--------------------//
 
+    public function findOfficerOrAdminByEmail(string $email): ?User
+    {
+        return User::where('email' , $email)
+            ->whereIn('role' , [UserRole::OFFICER->value , UserRole::MANAGER->value])
+            ->first();
+    }
 
 }

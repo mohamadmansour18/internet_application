@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\ComplaintCurrentStatus;
+use App\Enums\UserRole;
 use App\Exceptions\ApiException;
 use App\Helpers\StorageUrlHelper;
 use App\Models\Complaint;
+use App\Models\User;
 use App\Repositories\Complaints_Domain\AttachmentRepository;
 use App\Repositories\Complaints_Domain\ComplaintRepository;
 use App\Repositories\Complaints_Domain\ComplaintTypeRepository;
@@ -13,6 +15,7 @@ use App\Services\Contracts\ComplaintServiceInterface;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 
 class ComplaintService implements ComplaintServiceInterface
 {
@@ -87,6 +90,7 @@ class ComplaintService implements ComplaintServiceInterface
         $complaintInfo = [
             'complaint_type' => $complaint->complaintType->name,
             'agency'         => $complaint->agency->name,
+            'created_at'     => $complaint->created_at->format('Y-m-d'),
             'complaint_number' => $complaint->number,
             'title'            => $complaint->title,
             'description'      => $complaint->description,
@@ -162,5 +166,66 @@ class ComplaintService implements ComplaintServiceInterface
         }
 
         $this->complaintRepository->addExtraInfo($complaint , $extraText , $attachmentPayload);
+    }
+
+    //--------------------------------------<DASHBOARD>--------------------------------------//
+
+    public function getComplaintBasedRole(User $user, int $perPage = 10, int $page = 1): LengthAwarePaginator
+    {
+        $agencyId = null ;
+
+        if($user->role->value === UserRole::OFFICER->value) {
+            $agencyId = $user->staffProfile->agency_id;
+        }
+        return $this->complaintRepository->PaginateComplaintsForDashboard($user->role->value , $user->id , $agencyId , $perPage , $page);
+    }
+
+    public function ComplaintDetails(int $complaintId): array
+    {
+        $complaint = $this->complaintRepository->getComplaintDetails($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException("العنصر الذي تحاول الوصول الى تفاصيله غير موجود اساسا" , 404);
+        }
+
+        //(1) complaint attachments
+        $attachments = $complaint->attachments->map(function($attachment){
+            return [
+                'id' => $attachment->id,
+                'path' => StorageUrlHelper::getImagePath($attachment->path),
+            ];
+        })->values()->toArray();
+
+        $complaintInfo = [
+            'officer' => $complaint->assignOfficer->name ?? "لم تستلم بعد",
+            'complaint_type' => $complaint->complaintType->name,
+            'agency'         => $complaint->agency->name,
+            'created_at'     => $complaint->created_at->format('Y-m-d'),
+            'complaint_number' => $complaint->number,
+            'title'            => $complaint->title,
+            'description'      => $complaint->description,
+            'status'           => $complaint->current_status->value,
+            'location_text'    => $complaint->location_text,
+            'extra'            => $complaint->extra ?? "لا يوجد معلومات اضافية",
+        ];
+
+        //(3) complaint history
+        Carbon::setLocale('ar');
+
+        $history = $complaint->complaintHistories->map(function($complaintHistory){
+            return [
+                'day' => $complaintHistory->created_at->translatedFormat('l'),
+                'date' => $complaintHistory->created_at->format('Y-m-d'),
+                'status' => $complaintHistory->status,
+                'note' => $complaintHistory->note ?? "لايوجد",
+            ];
+        })->values()->toArray();
+
+        return [
+            'attachments'    => $attachments,
+            'complaint_info' => $complaintInfo,
+            'history'        => $history,
+        ];
     }
 }

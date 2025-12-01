@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\OtpCodePurpose;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DashboardLoginRequest;
 use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginCitizenRequest;
 use App\Http\Requests\OtpVerificationRequest;
@@ -108,5 +109,18 @@ class UserController extends Controller
             'newToken' => $newToken,
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
         ],200);
+    }
+
+    //---------------------------------------<DASHBOARD>---------------------------------------//
+
+    public function loginForDashboard(DashboardLoginRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['ip'] = $request->ip();
+        $data['user_agent'] = $request->userAgent();
+
+        $data = $this->authService->loginForDashboard($data);
+
+        return $this->dataResponse($data , 200);
     }
 }

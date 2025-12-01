@@ -88,4 +88,24 @@ class ComplaintController extends Controller
 
         return $this->successResponse("تم ارسال المعلومات الاضافية لهذه الشكوى بنجاح" , 201);
     }
+
+    //----------------------------------<>----------------------------------//
+
+    public function getComplaintBasedRole(PaginateRequest $request): JsonResponse
+    {
+        $user = Auth::user();
+        $perPage = $request->getPerPage();
+        $page = $request->getPage();
+
+        $data = $this->complaintService->getComplaintBasedRole($user , $perPage, $page);
+
+        return $this->paginatedResponse(paginator:  $data , message: "تم جلب البيانات بشكل مقتطع بنجاح"  , statusCode: 200);
+    }
+
+    public function ComplaintDetails(int $complaintId): JsonResponse
+    {
+        $data = $this->complaintService->ComplaintDetails($complaintId);
+
+        return $this->dataResponse(data: $data , statusCode: 200);
+    }
 }

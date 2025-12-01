@@ -60,6 +60,43 @@ Route::prefix('/v1/citizen')->group(function () {
     });
 });
 
+Route::prefix('/v1/both')->group(function () {
+
+    Route::post('/login' , [UserController::class , 'loginForDashboard'])->middleware('throttle:loginApi');
+
+    Route::middleware('throttle:forgotPasswordApi')->group(function () {
+
+        Route::post('/forgotPassword' , [UserController::class , 'forgotPassword']);
+        Route::post('/verifyForgotPasswordEmail' , [UserController::class , 'verifyForgotPasswordEmail']);
+        Route::post('/resetPassword' , [UserController::class , 'resetPassword']);
+        Route::post('/resendPasswordResetOtp' , [UserController::class , 'resendPasswordResetOtp']);
+
+    });
+
+    /** @noinspection PhpParamsInspection */
+    Route::middleware(['jwt' ,'role:both' , 'throttle:roleBasedApi'])->group(function () {
+
+        Route::get('/logout' , [UserController::class , 'logout']);
+
+        Route::prefix('/home')->group(function () {
+
+
+        });
+
+        Route::prefix('/UserManagement')->group(function () {
+
+
+
+        });
+
+        Route::prefix('/ComplaintManagement')->group(function () {
+            Route::post('/getComplaint' , [ComplaintController::class , 'getComplaintBasedRole']);
+            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'ComplaintDetails']);
+        });
+
+    });
+});
+
 Route::post('/refresh' , [UserController::class , 'refresh'])->middleware('jwt.refresh');
 
 /*

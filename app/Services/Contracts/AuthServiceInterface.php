@@ -14,4 +14,7 @@ interface AuthServiceInterface
     public function forgotPassword(string $email): array;
     public function verifyForgotPasswordEmail(array $data): array;
     public function resetPassword(array $data): array;
+
+    //--------------------<DASHBOARD>--------------------//
+    public function loginForDashboard(array $data): array;
 }
