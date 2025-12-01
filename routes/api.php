@@ -5,6 +5,7 @@ use App\Http\Controllers\Audit\NotificationController;
 use App\Http\Controllers\Auth\UserController;
 use App\Http\Controllers\Complaints_Domain\ComplaintController;
 use App\Http\Controllers\Complaints_Domain\ComplaintTypeController;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -56,7 +57,7 @@ Route::prefix('/v1/citizen')->group(function () {
             Route::post('/addDetails/{complain_id}' , [ComplaintController::class , 'addExtraInfoToComplaint']);
         });
 
-        Route::get('/Notification' , [NotificationController::class , 'getCitizenNotifications']);
+        Route::get('/notification' , [NotificationController::class , 'getCitizenNotifications']);
     });
 });
 
@@ -95,7 +96,8 @@ Route::prefix('/v1/both')->group(function () {
 
             Route::post('/inProgress/{complain_id}' , [ComplaintController::class , 'StartProcessingComplaint']);
             Route::post('/reject/{complain_id}' , [ComplaintController::class , 'rejectComplaint']);
-            Route::post('accept/{complain_id}' , [ComplaintController::class , '']);
+            Route::post('/finish/{complain_id}' , [ComplaintController::class , 'finishProcessingComplaint']);
+            Route::post('/moreInfo/{complain_id}' , [ComplaintController::class , 'requestMoreInfoToComplaint']);
         });
 
     });
@@ -103,6 +105,25 @@ Route::prefix('/v1/both')->group(function () {
 
 Route::post('/refresh' , [UserController::class , 'refresh'])->middleware('jwt.refresh');
 
+
+Route::get('/test-fcm', function (FirebaseNotificationService $fcm) {
+    \App\Events\FcmNotificationRequested::dispatch([3] , "الوووووو" , "مرحبا زعييييم");
+    return "تمت العملية بنجاح";
+//    try {
+//        $fcm->send(
+//            'Hello Obeda',
+//            'Test',
+//            ['feQ0xpsbSAS89BkAniZ-F8:APA91bFuSmS4SLeYZvzsOW2XTvMlFMPRm9od8T58CHOvzy9yucQzO1upEemIZN_5XEtxICcL8jKzAgq9mqimAbYsw_oRhVtrutRwmANsmA1ACnODnknqCNw']
+//        );
+//        return "تمت العملية بنجاح";
+//    }catch (\Exception $e)
+//    {
+//        return response()->json([
+//            'title' => "خطا اتصال من الشبكة!",
+//            'body' => $e->getMessage(),
+//        ], 422);
+//    }
+});
 /*
  * Route::get('/search', ...)
     ->middleware('throttle:30,1'); //max.minutes

@@ -23,5 +23,6 @@ interface ComplaintServiceInterface
 
     public function StartProcessingComplaint(int $userId, int $complaintId, ?string $note = null): Complaint;
     public function rejectComplaint(int $userId , int $complaintId , ?string $note = null): Complaint;
-
+    public function finishComplaint(int $userId , int $complaintId , ?string $note = null): Complaint;
+    public function requestMoreInfoToComplaint(int $userId , int $complaintId , string $note ): Complaint;
 }

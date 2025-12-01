@@ -263,6 +263,51 @@ class ComplaintService implements ComplaintServiceInterface
             throw new ApiException("لايمكنك رفض شكوى هي اساسا مرفوضة" , 422);
         }
 
-        return $this->complaintRepository->startProcessComplaint($complaintId , $userId , $note);
+        return $this->complaintRepository->rejectComplaint($complaintId , $userId , $note);
+    }
+
+    public function finishComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        $complaint = $this->complaintRepository->findComplaintById($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException('الشكوى التي تحاول الوصول اليها غير موجودة', 404);
+        }
+
+        if($complaint->current_status->value === ComplaintCurrentStatus::REJECTED->value)
+        {
+            throw new ApiException("لايمكنك رفض شكوى بعد ان تم معالجتها" , 422);
+        }
+
+        if($complaint->current_status->value === ComplaintCurrentStatus::DONE->value)
+        {
+            throw new ApiException("لايمكنك اتمام معالجة شكوى قد تم معالجتها" , 422);
+        }
+
+        if($complaint->current_status->value === ComplaintCurrentStatus::NEW->value)
+        {
+            throw new ApiException("لايمكنك اتمام معالجة الشكوى مباشرة دون دراستها ووضعها تحت قيد المعالجة" , 422);
+        }
+
+        return $this->complaintRepository->acceptComplaint($complaint , $userId , $note);
+    }
+
+    public function requestMoreInfoToComplaint(int $userId, int $complaintId, string $note): Complaint
+    {
+        $complaint = $this->complaintRepository->findComplaintById($complaintId);
+
+        if(!$complaint)
+        {
+            throw new ApiException('الشكوى التي تحاول الوصول اليها غير موجودة', 404);
+        }
+
+        if($complaint->current_status->value !== ComplaintCurrentStatus::IN_PROGRESS->value)
+        {
+            throw new ApiException("لايمكنك طلب معلومات اضافية من هذه الشكوى" , 422);
+        }
+
+        return $this->complaintRepository->addMoreInfoToComplaint($complaint , $userId , $note);
+
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Complaints_Domain;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ComplaintNeedInfoRequest;
 use App\Http\Requests\ComplaintNoteRequest;
 use App\Http\Requests\CreateComplaintRequest;
 use App\Http\Requests\ExtraInformationComplaintRequest;
@@ -126,5 +127,23 @@ class ComplaintController extends Controller
         $this->complaintService->rejectComplaint($userId , $complaintId , $request->input('note'));
 
         return $this->successResponse("تمت العملية بنجاح والشكوى تم رفضها" , 200);
+    }
+
+    public function finishProcessingComplaint(ComplaintNoteRequest $request , int $complaintId): JsonResponse
+    {
+        $userId = Auth::id();
+
+        $this->complaintService->finishComplaint($userId , $complaintId , $request->input('note'));
+
+        return $this->successResponse("تمت العملية بنجاح والشكوى تمت معالجتها" , 200);
+    }
+
+    public function requestMoreInfoToComplaint(ComplaintNeedInfoRequest $request , int $complaintId): JsonResponse
+    {
+        $userId = Auth::id();
+
+        $this->complaintService->requestMoreInfoToComplaint($userId , $complaintId , $request->input('note'));
+
+        return $this->successResponse("تم ارسال اشعار للمستخدم بطلب معلومات اضافية من اجل معالجة الشكوى" , 200);
     }
 }

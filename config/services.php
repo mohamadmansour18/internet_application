@@ -32,7 +32,7 @@ return [
     ],
 
     'fcm' => [
-        'credentials_file' => 'storage/firebase/fireBaseService.json',
+        'credentials_file' => 'storage/firebase/FirebaseService.json',
     ]
 
 ];

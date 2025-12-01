@@ -7,6 +7,7 @@ namespace App\Repositories\Complaints_Domain;
 use App\Enums\ComplaintCurrentStatus;
 use App\Enums\UserRole;
 use App\Exceptions\ApiException;
+use App\Http\Requests\ComplaintNoteRequest;
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -194,5 +195,41 @@ class ComplaintRepository
         });
     }
 
+    public function acceptComplaint(Model|Builder $complaint , int $userId , ?string $note = null)
+    {
+        return DB::transaction(function() use ($complaint , $userId , $note){
 
+            $complaint->assigned_officer_id = $userId;
+            $complaint->current_status = ComplaintCurrentStatus::DONE->value ;
+            $complaint->save();
+
+            $complaint->statusHistories()->create([
+                'status'     => ComplaintCurrentStatus::DONE->value,
+                'changed_by' => $userId,
+                'note'       => $note,
+            ]);
+
+            return $complaint->fresh();
+        });
+    }
+
+    public function addMoreInfoToComplaint(Model|Builder $complaint , int $userId , string $extra)
+    {
+        return DB::transaction(function() use ($complaint , $userId , $extra){
+
+            $complaint->assigned_officer_id = $userId;
+            $complaint->current_status = ComplaintCurrentStatus::NEED_INFORMATION->value ;
+            $complaint->extra = $extra;
+            $complaint->has_extra_info = true;
+            $complaint->save();
+
+            $complaint->statusHistories()->create([
+                'status'     => ComplaintCurrentStatus::DONE->value,
+                'changed_by' => $userId,
+                'note'       => $extra,
+            ]);
+
+            return $complaint->fresh();
+        });
+    }
 }

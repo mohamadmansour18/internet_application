@@ -289,6 +289,7 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
                     "dashboard:officer:{$userId}:complaints",
+                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
@@ -330,6 +331,7 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
                     "dashboard:officer:{$userId}:complaints",
+                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
@@ -340,6 +342,88 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     'changes'      => [
                         'action'         => 'set_rejected',
                         'new_status'     => ComplaintCurrentStatus::REJECTED->value,
+                        'has_note'       => ! empty($note),
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    public function finishComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
+    {
+        return $this->around(
+            action: 'complaints.finish_processing',
+            context: [
+                'officer_id'   => $userId,
+                'complaint_id' => $complaintId,
+                'has_note'     => ! empty($note),
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+
+            callback: fn () => $this->inner->finishComplaint($userId, $complaintId, $note),
+            after: function (Complaint $complaint) use ($userId , $complaintId) {
+
+                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم انهاء معالجة الشكوى الخاصة بك ذو الرقم {$complaint->number}"));
+
+                Cache::tags([
+                    "citizen:{$complaint->citizen_id}:complaints",
+                    "complaint:{$complaintId}",
+                    "dashboard:admin:complaints",
+                    "dashboard:officer:{$userId}:complaints",
+                    "citizen:notifications:{$complaint->citizen_id}"
+                ])->flush();
+            },
+            audit: function (Complaint $complaint) use ($userId, $note) {
+                return [
+                    'actor_id'     => $userId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaint->id,
+                    'changes'      => [
+                        'action'         => 'set_Done',
+                        'new_status'     => ComplaintCurrentStatus::DONE->value,
+                        'has_note'       => ! empty($note),
+                    ],
+                ];
+            },
+            withTiming: true,
+            withLogging: true,
+        );
+    }
+
+    public function requestMoreInfoToComplaint(int $userId, int $complaintId, string $note ): Complaint
+    {
+        return $this->around(
+            action: 'complaints.Request_more_info',
+            context: [
+                'officer_id'   => $userId,
+                'complaint_id' => $complaintId,
+                'has_note'     => ! empty($note),
+                'time'         => now()->format('Y-m-d H:i:s'),
+            ],
+
+            callback: fn () => $this->inner->requestMoreInfoToComplaint($userId, $complaintId, $note),
+            after: function (Complaint $complaint) use ($userId , $complaintId , $note) {
+
+                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi($note));
+
+                Cache::tags([
+                    "citizen:{$complaint->citizen_id}:complaints",
+                    "complaint:{$complaintId}",
+                    "dashboard:admin:complaints",
+                    "dashboard:officer:{$userId}:complaints",
+                    "citizen:notifications:{$complaint->citizen_id}"
+                ])->flush();
+            },
+            audit: function (Complaint $complaint) use ($userId, $note) {
+                return [
+                    'actor_id'     => $userId,
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => $complaint->id,
+                    'changes'      => [
+                        'action'         => 'set_requested',
+                        'new_status'     => ComplaintCurrentStatus::NEED_INFORMATION->value,
                         'has_note'       => ! empty($note),
                     ],
                 ];

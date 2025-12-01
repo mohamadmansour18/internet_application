@@ -6,6 +6,7 @@ use App\Enums\OtpCodePurpose;
 use App\Enums\UserRole;
 use App\Exceptions\ApiException;
 use App\Jobs\FailedLogin;
+use App\Models\FcmToken;
 use App\Repositories\Auth\FailedLoginRepository;
 use App\Repositories\Auth\OtpCodesRepository;
 use App\Repositories\Auth\UserRepository;
@@ -91,6 +92,14 @@ class AuthService implements AuthServiceInterface
         });
 
         $token = JWTAuth::fromUser($user);
+
+        if(!empty($data['fcm_token']))
+        {
+            FcmToken::updateOrCreate(
+                ['token' =>$data['fcm_token']],
+                ['user_id' => $user->id]
+            );
+        }
 
         return [
             'token' => $token,
