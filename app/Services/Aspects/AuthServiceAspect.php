@@ -23,13 +23,6 @@ class AuthServiceAspect implements AuthServiceInterface
     public function registerCitizen(array $data): array
     {
         return $this->around(
-            action: 'auth.register_citizen',
-            context: [
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'national_number'=>$data['national_number'],
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             before: function () {
                 if(Auth::check())
                 {
@@ -54,20 +47,12 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function loginCitizen(array $data): array
     {
         $result = $this->around(
-            action: 'auth.login_citizen',
-            context: [
-                'email' => $data['email'] ?? null,
-                'ip' => $data['ip'] ?? null,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->loginCitizen($data),
             audit: function(array $result){
                 return [
@@ -80,8 +65,6 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
 
         return [
@@ -94,11 +77,6 @@ class AuthServiceAspect implements AuthServiceInterface
     public function verifyRegistration(array $data): array
     {
         return $this->around(
-            action: 'auth.verify_citizen_registration',
-            context: [
-                'email' => $data['email'] ?? null,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->verifyRegistration($data),
             audit: function(array $result){
                 return [
@@ -112,20 +90,12 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function resendOtp(string $email , string $purpose): array
     {
         return $this->around(
-            action: 'auth.resend_otp',
-            context: [
-                'email' => $email ,
-                'purpose' => $purpose,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->resendOtp($email , $purpose),
             after: function(array $result){
                 SendOtpCode::dispatch(email: $result['user']->email , name:  $result['user']->name , code:  $result['otp']->otp_code , purpose: $result['otp']->purpose->value);
@@ -143,8 +113,6 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
@@ -153,11 +121,6 @@ class AuthServiceAspect implements AuthServiceInterface
     public function forgotPassword(string $email): array
     {
          return $this->around(
-             action: 'auth.forgot_password',
-             context: [
-                 'email' => $email ,
-                 'time' => now()->format('Y-m-d H:i:s'),
-             ],
              callback: fn() => $this->inner->forgotPassword($email),
              after: function(array $result){
                  SendOtpCode::dispatch(email: $result['user']->email , name:  $result['user']->name , code:  $result['otp']->otp_code , purpose: $result['otp']->purpose->value);
@@ -174,20 +137,12 @@ class AuthServiceAspect implements AuthServiceInterface
                      ]
                  ];
              },
-             withTiming: true,
-             withLogging: true
          );
     }
 
     public function verifyForgotPasswordEmail(array $data): array
     {
         return $this->around(
-            action: 'auth.verify_forgot_password_email',
-            context: [
-                'email' => $data['email'] ?? null,
-                'otp' => $data['otp'] ?? null,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->verifyForgotPasswordEmail($data),
             audit: function(array $result){
                 return [
@@ -201,19 +156,12 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function resetPassword(array $data):array
     {
         return $this->around(
-            action: 'auth.reset_password',
-            context: [
-                'email' => $data['email'] ?? null,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->resetPassword($data),
             audit: function(array $result){
                 return [
@@ -226,8 +174,6 @@ class AuthServiceAspect implements AuthServiceInterface
                     ]
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
@@ -236,13 +182,6 @@ class AuthServiceAspect implements AuthServiceInterface
     public function loginForDashboard(array $data): array
     {
         $response = $this->around(
-            action: 'auth.dashboard_login',
-            context: [
-                'email' => $data['email'],
-                'time'  => now()->format('Y-m-d H:i:s'),
-                'ip'    => request()->ip(),
-            ],
-
             callback: fn () => $this->inner->loginForDashboard($data),
             audit: function (array $result) {
                 $user = $result['user'];
@@ -256,8 +195,6 @@ class AuthServiceAspect implements AuthServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
 
         return [

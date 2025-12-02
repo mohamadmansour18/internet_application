@@ -7,7 +7,6 @@ use App\Events\FcmNotificationRequested;
 use App\Exceptions\ApiException;
 use App\Helpers\TextHelper;
 use App\Models\Complaint;
-use App\Models\User;
 use App\Services\Contracts\ComplaintServiceInterface;
 use App\Traits\AspectTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -27,13 +26,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
     public function getCitizenComplaints(int $citizenId, int $perPage = 10, int $page = 1): LengthAwarePaginator
     {
         return $this->around(
-            action: 'complaints.list_citizen',
-            context: [
-                'citizenId' => $citizenId,
-                'perPage' => $perPage,
-                'page' => $page,
-                'time' => now()->format("Y-m-d H:i:s"),
-            ],
             callback: fn() => $this->inner->getCitizenComplaints($citizenId, $perPage, $page),
             audit: function(LengthAwarePaginator $result) use ($citizenId) {
                 return [
@@ -48,20 +40,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ]
                 ];
             },
-            withTiming: true ,
-            withLogging: true
         );
     }
 
     public function SearchComplaint(int $citizenId, int $number):array
     {
         return $this->around(
-            action: 'complaints.find_by_number',
-            context: [
-                'citizen_id' => $citizenId,
-                'number_of_complaint' => $number,
-                'time' => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->SearchComplaint($citizenId, $number),
             audit: function(array $result) use ($number, $citizenId) {
                 return [
@@ -74,21 +58,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ]
                 ];
             },
-            withTiming: true ,
-            withLogging: true,
         );
     }
 
     public function createCitizenComplaint(int $citizenId, array $data, array $attachments = []): Complaint
     {
         return $this->around(
-            action: 'complaints.create',
-            context: [
-                'citizenId' => $citizenId,
-                'agency_id' => $data['agency_id'],
-                'complaint_type_id' => $data['complaint_type_id'],
-                'time' => now()->format('Y-m-d H:i:s')
-            ],
             callback: fn() => $this->inner->createCitizenComplaint($citizenId, $data, $attachments),
             after: function () use ($citizenId) {
                 Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
@@ -106,20 +81,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true ,
-            withLogging: true
         );
     }
 
     public function getCitizenComplaintDetails(int $citizenId, int $complaintId): array
     {
         return $this->around(
-            action: 'complaints.details',
-            context: [
-                'citizen_id'   => $citizenId,
-                'complaint_id' => $complaintId,
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn () => $this->inner->getCitizenComplaintDetails($citizenId, $complaintId),
             audit: function (array $result) use ($citizenId, $complaintId) {
                 return [
@@ -132,8 +99,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
@@ -142,12 +107,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
          $citizenId = Auth::id();
 
          $this->around(
-            action: 'complaints.delete',
-            context: [
-                'citizen_id'   => $citizenId,
-                'complaint_id' => $complaintId,
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
             before: function () use ($citizenId) {
                 if (! Auth::check() || Auth::id() !== $citizenId) {
                     throw new ApiException('غير مصرح لك بحذف هذه الشكوى', 403);
@@ -168,22 +127,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function addExtraInfoToComplaint(int $complaintId, int $citizenId, ?string $extraText, ?UploadedFile $extraAttachment): void
     {
         $this->around(
-            action: 'complaints.add_extra_info',
-            context: [
-                'citizen_id'   => $citizenId,
-                'complaint_id' => $complaintId,
-                'has_text'     => ! empty($extraText),
-                'has_attachment' => $extraAttachment instanceof UploadedFile,
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn() => $this->inner->addExtraInfoToComplaint($complaintId, $citizenId, $extraText, $extraAttachment),
             after: function () use ($citizenId , $complaintId) {
                 Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
@@ -201,8 +150,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
@@ -211,13 +158,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
     public function getComplaintBasedRole(?Authenticatable $user , int $perPage = 10, int $page = 1): LengthAwarePaginator
     {
         return $this->around(
-            action: 'complaints.dashboard_index',
-            context: [
-                'user_id'    => Auth::id(),
-                'per_page'   => $perPage,
-                'page'       => $page,
-                'time'       => now()->format('Y-m-d H:i:s'),
-            ],
             before: function () use ($user) {
                 if (! Auth::check() || Auth::id() !== $user->id) {
                     throw new ApiException('غير مصرح لك بالوصول إلى هذه البيانات', 403);
@@ -238,19 +178,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function ComplaintDetails(int $complaintId): array
     {
         return $this->around(
-            action: 'complaints.details',
-            context: [
-                'complaint_id' => $complaintId,
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
             callback: fn () => $this->inner->ComplaintDetails($complaintId),
             audit: function (array $result) use ($complaintId) {
                 return [
@@ -263,22 +196,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function StartProcessingComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
     {
         return $this->around(
-            action: 'complaints.start_processing',
-            context: [
-                'officer_id'   => $userId,
-                'complaint_id' => $complaintId,
-                'has_note'     => ! empty($note),
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
-
             callback: fn () => $this->inner->startProcessingComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
@@ -305,22 +228,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function rejectComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
     {
         return $this->around(
-            action: 'complaints.reject',
-            context: [
-                'officer_id'   => $userId,
-                'complaint_id' => $complaintId,
-                'has_note'     => ! empty($note),
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
-
             callback: fn () => $this->inner->rejectComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
@@ -346,22 +259,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function finishComplaint(int $userId, int $complaintId, ?string $note = null): Complaint
     {
         return $this->around(
-            action: 'complaints.finish_processing',
-            context: [
-                'officer_id'   => $userId,
-                'complaint_id' => $complaintId,
-                'has_note'     => ! empty($note),
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
-
             callback: fn () => $this->inner->finishComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
@@ -387,22 +290,12 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 
     public function requestMoreInfoToComplaint(int $userId, int $complaintId, string $note ): Complaint
     {
         return $this->around(
-            action: 'complaints.Request_more_info',
-            context: [
-                'officer_id'   => $userId,
-                'complaint_id' => $complaintId,
-                'has_note'     => ! empty($note),
-                'time'         => now()->format('Y-m-d H:i:s'),
-            ],
-
             callback: fn () => $this->inner->requestMoreInfoToComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId , $note) {
 
@@ -428,8 +321,6 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                     ],
                 ];
             },
-            withTiming: true,
-            withLogging: true,
         );
     }
 

@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'jwt.refresh' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken::class,
         'jwt.auth' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
         'jwt' => \App\Http\Middleware\JwtAuthenticate::class,
+        'Logging' => \App\Http\Middleware\LoggingMiddleware::class,
     ];
 }

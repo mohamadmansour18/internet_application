@@ -21,13 +21,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/v1/citizen')->group(function () {
 
-    Route::post('/register' , [UserController::class , 'registerCitizen'])->middleware('throttle:registerApi');
-    Route::post('/login' , [UserController::class , 'loginCitizen'])->middleware('throttle:loginApi');
+    Route::post('/register' , [UserController::class , 'registerCitizen'])->middleware(['throttle:registerApi' , 'Logging:register.citizen']);
+    Route::post('/login' , [UserController::class , 'loginCitizen'])->middleware(['throttle:loginApi' , 'Logging:login.citizen']);
 
-    Route::post('/verifyAccount' , [UserController::class , 'verifyRegistrationCitizen']);
-    Route::post('/resendOtp' , [UserController::class , 'resendOtp'])->middleware('throttle:registerApi');
+    Route::post('/verifyAccount' , [UserController::class , 'verifyRegistrationCitizen'])->middleware(['Logging:verify.citizen.account']);
+    Route::post('/resendOtp' , [UserController::class , 'resendOtp'])->middleware(['throttle:registerApi' , 'Logging:resendOtp.for.verification']);
 
-    Route::middleware('throttle:forgotPasswordApi')->group(function () {
+    /** @noinspection PhpParamsInspection */
+    Route::middleware(['throttle:forgotPasswordApi' , 'Logging:reset.password'])->group(function () {
 
         Route::post('/forgotPassword' , [UserController::class , 'forgotPassword']);
         Route::post('/verifyForgotPasswordEmail' , [UserController::class , 'verifyForgotPasswordEmail']);
@@ -38,34 +39,35 @@ Route::prefix('/v1/citizen')->group(function () {
 
     /** @noinspection PhpParamsInspection */
     Route::middleware(['jwt' ,'role:citizen' , 'throttle:roleBasedApi'])->group(function () {
-        Route::get('/logout' , [UserController::class , 'logout']);
+        Route::get('/logout' , [UserController::class , 'logout'])->middleware('Logging:logout');
 
         Route::prefix('/home')->group(function () {
 
-            Route::post('/showComplaints' , [ComplaintController::class , 'getCitizenComplaints']);
-            Route::post('/searchComplaint' , [ComplaintController::class , 'SearchComplaint']);
+            Route::post('/showComplaints' , [ComplaintController::class , 'getCitizenComplaints'])->middleware('Logging:show.citizen.complaints');
+            Route::post('/searchComplaint' , [ComplaintController::class , 'SearchComplaint'])->middleware('Logging:search.citizen.complaints');
 
-            Route::post('/createComplain' , [ComplaintController::class , 'createCitizenComplaint']);
+            Route::post('/createComplain' , [ComplaintController::class , 'createCitizenComplaint'])->middleware('Logging:create.complaint');
             Route::get('/agencyByName' , [AgencyController::class , 'agencies']);
             Route::get('/ComplaintTypeByName' , [ComplaintTypeController::class , 'complaintTypes']);
         });
 
         Route::prefix('/complaint')->group(function () {
 
-            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'getCitizenComplaintDetails']);
-            Route::delete('/delete/{complain_id}' , [ComplaintController::class , 'deleteComplaint']);
-            Route::post('/addDetails/{complain_id}' , [ComplaintController::class , 'addExtraInfoToComplaint']);
+            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'getCitizenComplaintDetails'])->middleware('Logging:show.citizen.complaint.details');
+            Route::delete('/delete/{complain_id}' , [ComplaintController::class , 'deleteComplaint'])->middleware('Logging:delete.complaint');
+            Route::post('/addDetails/{complain_id}' , [ComplaintController::class , 'addExtraInfoToComplaint'])->middleware('Logging:add.extra.complaint.details');
         });
 
-        Route::get('/notification' , [NotificationController::class , 'getCitizenNotifications']);
+        Route::get('/notification' , [NotificationController::class , 'getCitizenNotifications'])->middleware('Logging:show.citizen.notification');
     });
 });
 
 Route::prefix('/v1/both')->group(function () {
 
-    Route::post('/login' , [UserController::class , 'loginForDashboard'])->middleware('throttle:loginApi');
+    Route::post('/login' , [UserController::class , 'loginForDashboard'])->middleware(['throttle:loginApi' , 'Logging:login.for.dashboard']);
 
-    Route::middleware('throttle:forgotPasswordApi')->group(function () {
+    /** @noinspection PhpParamsInspection */
+    Route::middleware(['throttle:forgotPasswordApi' , 'Logging:reset.password.for.dashboard'])->group(function () {
 
         Route::post('/forgotPassword' , [UserController::class , 'forgotPassword']);
         Route::post('/verifyForgotPasswordEmail' , [UserController::class , 'verifyForgotPasswordEmail']);
@@ -77,7 +79,7 @@ Route::prefix('/v1/both')->group(function () {
     /** @noinspection PhpParamsInspection */
     Route::middleware(['jwt' ,'role:both' , 'throttle:roleBasedApi'])->group(function () {
 
-        Route::get('/logout' , [UserController::class , 'logout']);
+        Route::get('/logout' , [UserController::class , 'logout'])->middleware('Logging:dashboard.logout');
 
         Route::prefix('/home')->group(function () {
 
@@ -91,13 +93,13 @@ Route::prefix('/v1/both')->group(function () {
         });
 
         Route::prefix('/ComplaintManagement')->group(function () {
-            Route::post('/getComplaint' , [ComplaintController::class , 'getComplaintBasedRole']);
-            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'ComplaintDetails']);
+            Route::post('/getComplaint' , [ComplaintController::class , 'getComplaintBasedRole'])->middleware('Logging:show.complaint.based.role');
+            Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'ComplaintDetails'])->middleware('Logging:show.complaint.details.dashboard');
 
-            Route::post('/inProgress/{complain_id}' , [ComplaintController::class , 'StartProcessingComplaint']);
-            Route::post('/reject/{complain_id}' , [ComplaintController::class , 'rejectComplaint']);
-            Route::post('/finish/{complain_id}' , [ComplaintController::class , 'finishProcessingComplaint']);
-            Route::post('/moreInfo/{complain_id}' , [ComplaintController::class , 'requestMoreInfoToComplaint']);
+            Route::post('/inProgress/{complain_id}' , [ComplaintController::class , 'StartProcessingComplaint'])->middleware('Logging:start.complaint.processing');
+            Route::post('/reject/{complain_id}' , [ComplaintController::class , 'rejectComplaint'])->middleware('Logging:reject.complaint');
+            Route::post('/finish/{complain_id}' , [ComplaintController::class , 'finishProcessingComplaint'])->middleware('Logging:finish.complaint.processing');
+            Route::post('/moreInfo/{complain_id}' , [ComplaintController::class , 'requestMoreInfoToComplaint'])->middleware('Logging:add.extra.complaint.details');
         });
 
     });

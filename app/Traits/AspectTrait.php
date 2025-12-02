@@ -9,23 +9,14 @@ use Illuminate\Support\Facades\Log;
 trait AspectTrait
 {
     protected function around(
-        string $action ,
-        array $context ,
         callable $before = null ,
         callable $callback = null ,
         callable $after = null,
         callable $audit = null ,
         callable $onError = null ,
-        bool $withTiming = false ,
-        bool $withLogging = false ,
     ){
-        $start = $withTiming ? microtime(true) : null ;
 
         try {
-            if($withLogging)
-            {
-                Log::channel('aspect')->info("[$action] BEFORE" , $context);
-            }
 
             if($before)
             {
@@ -53,26 +44,9 @@ trait AspectTrait
                 $after($result);
             }
 
-            if($withTiming && $withLogging)
-            {
-                $duration = microtime(true) - $start;
-                $context['timeExecutionInMicroSecond'] = $duration * 1000;
-            }
-
-            if($withLogging)
-            {
-                Log::channel('aspect')->info("[$action] AFTER", $context);
-            }
-
             return $result;
         }catch(\Throwable $exception)
         {
-            if($withLogging)
-            {
-                Log::channel('aspect')->error("[$action] EXCEPTION", array_merge($context , [
-                    'error' => $exception->getMessage(),
-                ]));
-            }
             if($onError)
             {
                 $onError($exception);
