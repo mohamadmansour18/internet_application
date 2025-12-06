@@ -81,17 +81,6 @@ Route::prefix('/v1/both')->group(function () {
 
         Route::get('/logout' , [UserController::class , 'logout'])->middleware('Logging:dashboard.logout');
 
-        Route::prefix('/home')->group(function () {
-
-
-        });
-
-        Route::prefix('/UserManagement')->group(function () {
-
-
-
-        });
-
         Route::prefix('/ComplaintManagement')->group(function () {
             Route::post('/getComplaint' , [ComplaintController::class , 'getComplaintBasedRole'])->middleware('Logging:show.complaint.based.role');
             Route::get('/getDetails/{complain_id}' , [ComplaintController::class , 'ComplaintDetails'])->middleware('Logging:show.complaint.details.dashboard');
@@ -105,6 +94,24 @@ Route::prefix('/v1/both')->group(function () {
     });
 });
 
+Route::prefix('/v1/manager')->group(function () {
+    /** @noinspection PhpParamsInspection */
+    Route::middleware(['jwt' ,'role:manager' , 'throttle:roleBasedApi'])->group(function () {
+
+        Route::prefix('/home')->group(function () {
+            Route::post('/getComplaintStatsMonth' , [ComplaintController::class , 'statsByMonth'])->middleware('Logging:get.complaint.stats.month');
+            Route::get('/getComplaintStatsYear' , [ComplaintController::class , 'yearlySummary'])->middleware('Logging:get.complaint.stats.year');
+            Route::post('/downloadStats' , [ComplaintController::class , 'downloadYearlyStats'])->middleware('Logging:download.stats');
+        });
+
+        Route::prefix('/UserManagement')->group(function () {
+
+
+
+        });
+
+    });
+});
 Route::post('/refresh' , [UserController::class , 'refresh'])->middleware('jwt.refresh');
 
 

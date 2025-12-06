@@ -137,6 +137,8 @@ return [
         'attachments' => 'المرفقات',
         'extra_text' => 'وصف اضافي',
         'extra_attachment' => 'مرفق اضافي',
-        'note' => 'ملاحظة'
+        'note' => 'الملاحظة',
+        'month' => 'الشهر' ,
+        'format' => 'التنسيق'
     ],
 ];

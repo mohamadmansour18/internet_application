@@ -11,6 +11,7 @@ use App\Http\Requests\ComplaintNoteRequest;
 use App\Models\Complaint;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -105,7 +106,7 @@ class ComplaintRepository
         });
     }
 
-    //----------------------------------------<>----------------------------------------//
+    //----------------------------------------<DASHBOARD>----------------------------------------//
 
     public function PaginateComplaintsForDashboard(string $role , int $userId , ?int $agencyId , int $perPage = 10 , int $page = 1): LengthAwarePaginator
     {
@@ -166,7 +167,7 @@ class ComplaintRepository
             $complaint->current_status = ComplaintCurrentStatus::IN_PROGRESS->value ;
             $complaint->save();
 
-            $complaint->statusHistories()->create([
+            $complaint->complaintHistories()->create([
                 'status'     => ComplaintCurrentStatus::IN_PROGRESS->value,
                 'changed_by' => $userId,
                 'note'       => $note,
@@ -185,7 +186,7 @@ class ComplaintRepository
             $complaint->current_status = ComplaintCurrentStatus::REJECTED->value ;
             $complaint->save();
 
-            $complaint->statusHistories()->create([
+            $complaint->complaintHistories()->create([
                 'status'     => ComplaintCurrentStatus::REJECTED->value,
                 'changed_by' => $userId,
                 'note'       => $note,
@@ -203,7 +204,7 @@ class ComplaintRepository
             $complaint->current_status = ComplaintCurrentStatus::DONE->value ;
             $complaint->save();
 
-            $complaint->statusHistories()->create([
+            $complaint->complaintHistories()->create([
                 'status'     => ComplaintCurrentStatus::DONE->value,
                 'changed_by' => $userId,
                 'note'       => $note,
@@ -223,13 +224,78 @@ class ComplaintRepository
             $complaint->has_extra_info = true;
             $complaint->save();
 
-            $complaint->statusHistories()->create([
-                'status'     => ComplaintCurrentStatus::DONE->value,
+            $complaint->complaintHistories()->create([
+                'status'     => ComplaintCurrentStatus::NEED_INFORMATION->value,
                 'changed_by' => $userId,
                 'note'       => $extra,
             ]);
 
             return $complaint->fresh();
         });
+    }
+
+    //----------------------------------------<ADMIN>----------------------------------------//
+
+    public function getMonthlyComplaintStatsByAgency(int $month): Collection|array
+    {
+        $year = now()->year;
+
+        $status = Complaint::query()
+            ->whereMonth('created_at', $month)
+            ->whereYear('created_at', $year)
+            ->selectRaw("
+                agency_id,
+                SUM(CASE WHEN current_status = 'معلقة' THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN current_status = 'تم رفضها' THEN 1 ELSE 0 END) AS rejected_count,
+                SUM(CASE WHEN current_status = 'تم معالجتها' THEN 1 ELSE 0 END) AS resolved_count,
+                COUNT(*) AS total_count
+            ")
+            ->groupBy('agency_id')
+            ->get();
+
+        $status->load('agency:id,name');
+
+        return $status;
+    }
+
+    public function getYearlyComplaintSummary(): array
+    {
+        $row = Complaint::query()
+            ->whereYear('created_at', now()->year)
+            ->selectRaw("
+                COUNT(*) AS total_count,
+                SUM(CASE WHEN current_status = 'معلقة'  THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN current_status = 'تم رفضها' THEN 1 ELSE 0 END) AS rejected_count,
+                SUM(CASE WHEN current_status = 'تم معالجتها' THEN 1 ELSE 0 END) AS resolved_count
+            ")
+            ->first();
+
+        return [
+            'total'    => (int) ($row->total_count    ?? 0),
+            'pending'  => (int) ($row->pending_count  ?? 0),
+            'rejected' => (int) ($row->rejected_count ?? 0),
+            'resolved' => (int) ($row->resolved_count ?? 0),
+        ];
+    }
+
+    public function getYearlyComplaintStatsByAgency(): Collection|array
+    {
+        $stats = Complaint::query()
+            ->whereYear('created_at', now()->year)
+            ->selectRaw("
+                agency_id,
+                SUM(CASE WHEN current_status = 'معلقة'            THEN 1 ELSE 0 END) AS pending_count,
+                SUM(CASE WHEN current_status = 'تم رفضها'         THEN 1 ELSE 0 END) AS rejected_count,
+                SUM(CASE WHEN current_status = 'تم معالجتها'      THEN 1 ELSE 0 END) AS resolved_count,
+                SUM(CASE WHEN current_status = 'قيد المعالجة'     THEN 1 ELSE 0 END) AS under_processing_count,
+                SUM(CASE WHEN current_status = 'معلومات اضافية'   THEN 1 ELSE 0 END) AS needs_additional_info_count,
+                COUNT(*) AS total_count
+            ")
+            ->groupBy('agency_id')
+            ->get();
+
+        $stats->load('agency:id,name');
+
+        return $stats;
     }
 }

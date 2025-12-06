@@ -27,6 +27,26 @@ return new class extends Migration
             $table->boolean('has_extra_info')->default(false);
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index(
+                ['citizen_id', 'created_at'],
+                'idx_complaints_citizen_created'
+            );
+
+            $table->unique(
+                'number',
+                'idx_complaints_number_unique'
+            );
+
+            $table->index(
+                ['assigned_officer_id', 'created_at'],
+                'idx_complaints_officer_created'
+            );
+
+            $table->index(
+                ['agency_id', 'current_status', 'created_at'],
+                'idx_complaints_agency_status_created'
+            );
         });
     }
 

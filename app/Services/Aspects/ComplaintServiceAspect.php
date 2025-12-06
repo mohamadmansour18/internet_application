@@ -7,6 +7,7 @@ use App\Events\FcmNotificationRequested;
 use App\Exceptions\ApiException;
 use App\Helpers\TextHelper;
 use App\Models\Complaint;
+use App\Models\User;
 use App\Services\Contracts\ComplaintServiceInterface;
 use App\Traits\AspectTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -324,4 +325,67 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
         );
     }
 
+    //-------------------------------<ADMIN>-------------------------------//
+
+    public function getComplaintStatsByMonthForDashboard(int $month): array
+    {
+        $year = now()->year;
+
+        return $this->around(
+            callback: fn () => $this->inner->getComplaintStatsByMonthForDashboard($month),
+            audit: function (array $result) use ($month , $year) {
+                return [
+                    'actor_id'     => Auth::id(),
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => Auth::id(),
+                    'changes'      => [
+                        'action'   => 'view_complaints_stats',
+                        'month'    => $month,
+                        'year'     => $year,
+                        'agencies' => count($result),
+                    ],
+                ];
+            },
+        );
+    }
+
+    public function getYearlyComplaintSummaryForDashboard(): array
+    {
+        return $this->around(
+            callback: fn () => $this->inner->getYearlyComplaintSummaryForDashboard(),
+            audit: function (array $result){
+                return [
+                    'actor_id'     => Auth::id(),
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => Auth::id(),
+                    'changes'      => [
+                        'action'   => 'view_yearly_complaints_summary',
+                        'year'     => now()->year,
+                        'total'    => $result['total']    ?? 0,
+                        'pending'  => $result['pending']  ?? 0,
+                        'rejected' => $result['rejected'] ?? 0,
+                        'resolved' => $result['resolved'] ?? 0,
+                    ],
+                ];
+            },
+        );
+    }
+
+    public function generateYearlyStatsReport(string $format = 'pdf'): array
+    {
+        return $this->around(
+            callback: fn () => $this->inner->generateYearlyStatsReport($format),
+            audit: function (array $result){
+                return [
+                    'actor_id'     => Auth::id(),
+                    'subject_type' => Complaint::class,
+                    'subject_id'   => Auth::id(),
+                    'changes'      => [
+                        'action'   => 'generate_yearly_stats_export',
+                        'year'     => now()->year,
+                    ],
+                ];
+            },
+        );
+    }
 }

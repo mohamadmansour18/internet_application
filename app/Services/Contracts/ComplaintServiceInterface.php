@@ -25,4 +25,11 @@ interface ComplaintServiceInterface
     public function rejectComplaint(int $userId , int $complaintId , ?string $note = null): Complaint;
     public function finishComplaint(int $userId , int $complaintId , ?string $note = null): Complaint;
     public function requestMoreInfoToComplaint(int $userId , int $complaintId , string $note ): Complaint;
+
+    //---------------------------------<ADMIN>---------------------------------//
+
+    public function getComplaintStatsByMonthForDashboard(int $month): array;
+    public function getYearlyComplaintSummaryForDashboard(): array;
+    public function generateYearlyStatsReport(string $format = 'pdf'): array;
+
 }

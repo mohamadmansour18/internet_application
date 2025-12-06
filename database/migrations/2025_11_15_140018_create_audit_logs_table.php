@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('actor_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('subject_type');
-            $table->unsignedBigInteger('subject_id');
+            $table->unsignedBigInteger('subject_id')->nullable();
             $table->json('changes');
             $table->timestamps();
         });

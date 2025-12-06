@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AgencyName;
 use App\Enums\ComplaintCurrentStatus;
 use App\Enums\UserRole;
 use App\Exceptions\ApiException;
@@ -16,6 +17,10 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Mpdf\Mpdf;
 
 class ComplaintService implements ComplaintServiceInterface
 {
@@ -262,6 +267,10 @@ class ComplaintService implements ComplaintServiceInterface
         {
             throw new ApiException("لايمكنك رفض شكوى هي اساسا مرفوضة" , 422);
         }
+        if($complaint->current_status->value === ComplaintCurrentStatus::NEW->value)
+        {
+            throw new ApiException("لايمكنك رفض شكوى لم تقم بوضعها في حالة قيد المعالجة" , 422);
+        }
 
         return $this->complaintRepository->rejectComplaint($complaintId , $userId , $note);
     }
@@ -277,7 +286,7 @@ class ComplaintService implements ComplaintServiceInterface
 
         if($complaint->current_status->value === ComplaintCurrentStatus::REJECTED->value)
         {
-            throw new ApiException("لايمكنك رفض شكوى بعد ان تم معالجتها" , 422);
+            throw new ApiException("لايمكنك معالجة شكوى بعد ان تم رفضها" , 422);
         }
 
         if($complaint->current_status->value === ComplaintCurrentStatus::DONE->value)
@@ -310,4 +319,176 @@ class ComplaintService implements ComplaintServiceInterface
         return $this->complaintRepository->addMoreInfoToComplaint($complaint , $userId , $note);
 
     }
+
+    //--------------------------------------<ADMIN>--------------------------------------//
+
+    public function getComplaintStatsByMonthForDashboard(int $month): array
+    {
+        $stats = $this->complaintRepository->getMonthlyComplaintStatsByAgency($month);
+
+        $result = [];
+
+        foreach (AgencyName::cases() as $agencyCase)
+        {
+            $agencyName = $agencyCase->value;
+            $row = $stats->firstwhere(fn($stat) => $stat->agency?->name->value === $agencyName);
+
+            $pending = (int) ($row->pending_count ?? 0);
+            $rejected = (int) ($row->rejected_count ?? 0);
+            $resolved = (int) ($row->resolved_count ?? 0);
+            $total    = (int) ($row->total_count    ?? 0);
+
+
+            $result[$agencyName] = [
+                'pending'  => $pending,
+                'rejected' => $rejected,
+                'resolved' => $resolved,
+                'total'    => $total,
+            ];
+        }
+        return $result;
+    }
+
+    public function getYearlyComplaintSummaryForDashboard(): array
+    {
+        return $this->complaintRepository->getYearlyComplaintSummary();
+    }
+
+    //--------------------------------------<PDF & CSV>--------------------------------------//
+    public function getYearlyStatsForExport(): array
+    {
+        $year = now()->year;
+        $stats = $this->complaintRepository->getYearlyComplaintStatsByAgency();
+
+        $result = [];
+
+        foreach ($stats as $row)
+        {
+            $agencyName = $row->agency?->name->value;
+
+            $pending       = (int) $row->pending_count;
+            $rejected      = (int) $row->rejected_count;
+            $resolved      = (int) $row->resolved_count;
+            $underProc     = (int) $row->under_processing_count;
+            $needsExtra    = (int) $row->needs_additional_info_count;
+            $total         = (int) $row->total_count;
+
+            $result[] = [
+                'agency_name'              => $agencyName,
+                'pending'                  => $pending,
+                'rejected'                 => $rejected,
+                'resolved'                 => $resolved,
+                'under_processing'         => $underProc,
+                'needs_additional_info'    => $needsExtra,
+                'total'                    => $total,
+            ];
+        }
+
+        return [
+            'year' => $year ,
+            'items' => $result,
+        ];
+    }
+
+    public function generateYearlyStatsReport(string $format = 'pdf'): array
+    {
+        $format = strtolower($format);
+
+        //Get data for report
+        $data  = $this->getYearlyStatsForExport();
+        $year  = $data['year'];
+        $items = $data['items'];
+
+        //make sure that folder is exists
+        Storage::disk('public')->makeDirectory('stats');
+
+        $baseName     = "complaints_stats_{$year}";
+        $relativePath = "stats/{$baseName}.{$format}";
+        $fullPath     = Storage::disk('public')->path($relativePath);
+        $fileName     = "{$baseName}.{$format}";
+
+        try {
+            if ($format === 'csv') {
+                $this->generateCsvFile($fullPath, $items, $year);
+            } else {
+                $this->generatePdfFile($fullPath, $items, $year);
+            }
+        }catch (\Throwable $exception)
+        {
+            Log::error('PDF generation failed' , [
+                'message' => $exception->getMessage(),
+                'trace'   => $exception->getTraceAsString(),
+            ]);
+            throw new ApiException('! حدث خطأ غير متوقع اثناء التنفيذ', $exception->getCode());
+        }
+
+        return [
+            'full_path' => $fullPath,
+            'file_name' => $fileName,
+        ];
+    }
+
+    protected function generateCsvFile(string $fullPath, array $items, int $year): void
+    {
+        $handle = fopen($fullPath, 'w');
+
+        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        fputcsv($handle, [
+            'الجهة الحكومية',
+            "السنة {$year}",
+            'معلقة',
+            'قيد المعالجة',
+            'معلومات اضافية',
+            'مرفوضة',
+            'تم انجازها',
+            'المجموع',
+        ]);
+
+        foreach ($items as $row) {
+            fputcsv($handle, [
+                $row['agency_name'],
+                $year,
+                $row['pending'],
+                $row['under_processing'],
+                $row['needs_additional_info'],
+                $row['rejected'],
+                $row['resolved'],
+                $row['total'],
+            ]);
+        }
+
+        fclose($handle);
+
+    }
+
+    protected function generatePdfFile(string $fullPath, array $items, int $year): void
+    {
+        $mpdfTemp = storage_path('app/mpdf-temp');
+        if (!File::exists($mpdfTemp)) {
+            File::makeDirectory($mpdfTemp, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'mode'              => 'utf-8',
+            'format'            => 'A4',
+            'directionality'    => 'rtl',
+            'autoLangToFont'    => true,
+            'autoScriptToLang'  => true,
+            'tempDir'           => $mpdfTemp,
+            'margin_top'        => 15,
+            'margin_bottom'     => 15,
+            'margin_left'       => 10,
+            'margin_right'      => 10,
+        ]);
+
+        $html = view('reports.yearly_complaints_stats', [
+            'year'  => $year,
+            'items' => $items,
+        ])->render();
+
+        $mpdf->WriteHTML($html);
+        $mpdf->Output($fullPath, \Mpdf\Output\Destination::FILE);
+    }
+
 }

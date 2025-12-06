@@ -7,6 +7,8 @@ use App\Http\Requests\ComplaintNeedInfoRequest;
 use App\Http\Requests\ComplaintNoteRequest;
 use App\Http\Requests\CreateComplaintRequest;
 use App\Http\Requests\ExtraInformationComplaintRequest;
+use App\Http\Requests\FileFormatRequest;
+use App\Http\Requests\MonthStatsRequest;
 use App\Http\Requests\PaginateRequest;
 use App\Http\Requests\SearchComplaintByNumberRequest;
 use App\Models\Complaint;
@@ -14,6 +16,7 @@ use App\Services\Contracts\ComplaintServiceInterface;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ComplaintController extends Controller
 {
@@ -91,7 +94,7 @@ class ComplaintController extends Controller
         return $this->successResponse("تم ارسال المعلومات الاضافية لهذه الشكوى بنجاح" , 201);
     }
 
-    //----------------------------------<>----------------------------------//
+    //----------------------------------<DASHBOARD>----------------------------------//
 
     public function getComplaintBasedRole(PaginateRequest $request): JsonResponse
     {
@@ -145,5 +148,31 @@ class ComplaintController extends Controller
         $this->complaintService->requestMoreInfoToComplaint($userId , $complaintId , $request->input('note'));
 
         return $this->successResponse("تم ارسال اشعار للمستخدم بطلب معلومات اضافية من اجل معالجة الشكوى" , 200);
+    }
+
+    //----------------------------------<ADMIN>----------------------------------//
+
+    public function statsByMonth(MonthStatsRequest $request): JsonResponse
+    {
+        $stats = $this->complaintService->getComplaintStatsByMonthForDashboard($request->validated()['month']);
+
+        return $this->dataResponse(data: $stats , statusCode: 200);
+    }
+
+    public function yearlySummary(): JsonResponse
+    {
+        $summary = $this->complaintService->getYearlyComplaintSummaryForDashboard();
+
+        return $this->dataResponse(
+            data: $summary,
+            statusCode: 200
+        );
+    }
+
+    public function downloadYearlyStats(FileFormatRequest $request): BinaryFileResponse
+    {
+        $fileInfo = $this->complaintService->generateYearlyStatsReport($request->validated()['format']);
+
+        return response()->download($fileInfo['full_path'], $fileInfo['file_name'])->deleteFileAfterSend(true);
     }
 }
