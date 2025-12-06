@@ -28,4 +28,9 @@ class Agency extends Model
     {
         return $this->hasMany(Complaint::class , 'agency_id' , 'id');
     }
+
+    public function staffProfiles(): HasMany
+    {
+        return $this->hasMany(StaffProfile::class , 'agency_id' , 'id');
+    }
 }

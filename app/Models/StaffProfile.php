@@ -31,4 +31,9 @@ class StaffProfile extends Model
     {
         return $this->belongsTo(User::class , 'user_id' , 'id')->withDefault();
     }
+
+    public function agency(): BelongsTo
+    {
+        return $this->belongsTo(Agency::class , 'agency_id' , 'id')->withDefault();
+    }
 }

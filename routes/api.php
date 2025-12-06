@@ -105,9 +105,12 @@ Route::prefix('/v1/manager')->group(function () {
         });
 
         Route::prefix('/UserManagement')->group(function () {
-
-
-
+            Route::post('/getCitizen' , [UserController::class , 'paginateCitizen'])->middleware('Logging:get.citizen');
+            Route::post('/getOfficer' , [UserController::class , 'paginateOfficer'])->middleware('Logging:get.officer');
+            Route::get('/deactivate/{user_id}' , [UserController::class , 'deactivate'])->middleware('Logging:deactivate.user');
+            Route::get('/putActive/{user_id}' , [UserController::class , 'activate'])->middleware('Logging:activate.user');
+            Route::post('/createOfficer' , [UserController::class , 'createOfficer'])->middleware('Logging:create.officer');
+            Route::get('/agencyByName' , [AgencyController::class , 'agencies']);
         });
 
     });

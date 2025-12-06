@@ -8,10 +8,13 @@ use App\Http\Requests\DashboardLoginRequest;
 use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\LoginCitizenRequest;
 use App\Http\Requests\OtpVerificationRequest;
+use App\Http\Requests\PaginateRequest;
 use App\Http\Requests\RegisterCitizenRequest;
 use App\Http\Requests\ResendOtpRequest;
 use App\Http\Requests\ResetPasswordRequest;
+use App\Http\Requests\StoreOfficerRequest;
 use App\Services\Contracts\AuthServiceInterface;
+use App\Services\Contracts\ProfileServiceInterface;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
@@ -22,6 +25,7 @@ class UserController extends Controller
 
     public function __construct(
         private readonly AuthServiceInterface $authService,
+        private readonly ProfileServiceInterface $profileService,
     ){}
 
     public function registerCitizen(RegisterCitizenRequest $request): JsonResponse
@@ -122,5 +126,44 @@ class UserController extends Controller
         $data = $this->authService->loginForDashboard($data);
 
         return $this->dataResponse($data , 200);
+    }
+
+    public function paginateCitizen(PaginateRequest $request): JsonResponse
+    {
+        $perPage = $request->getPerPage();
+        $page = $request->getPage();
+
+        $paginator = $this->profileService->paginateCitizens($perPage, $page);
+        return $this->paginatedResponse($paginator ,"تم جلب البيانات بنجاح" ,200);
+    }
+
+    public function paginateOfficer(PaginateRequest $request): JsonResponse
+    {
+        $perPage = $request->getPerPage();
+        $page = $request->getPage();
+
+        $paginator = $this->profileService->paginateOfficers($perPage, $page);
+        return $this->paginatedResponse($paginator ,"تم جلب البيانات بنجاح" ,200);
+    }
+
+    public function deactivate(int $userId): JsonResponse
+    {
+        $this->profileService->deactivateUser($userId);
+
+        return $this->successResponse(message: 'تم إلغاء تنشيط الحساب بنجاح');
+    }
+
+    public function activate(int $userId): JsonResponse
+    {
+        $this->profileService->activateUser($userId);
+
+        return $this->successResponse(message: 'تم تنشيط الحساب بنجاح');
+    }
+
+    public function createOfficer(StoreOfficerRequest $request): JsonResponse
+    {
+        $this->profileService->createOfficer($request->validated());
+
+        return $this->successResponse("تم انشاء حساب هذا الموظف بنجاح" , 201);
     }
 }
