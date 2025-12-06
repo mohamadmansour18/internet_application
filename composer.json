@@ -12,9 +12,10 @@
         "laravel/horizon": "^5.40",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "mpdf/mpdf": "*",
         "php-open-source-saver/jwt-auth": "^2.8",
         "predis/predis": "^2.0",
-        "mpdf/mpdf": "*"
+        "spatie/laravel-backup": "^9.3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.1",
