@@ -68,6 +68,8 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             callback: fn() => $this->inner->createCitizenComplaint($citizenId, $data, $attachments),
             after: function () use ($citizenId) {
                 Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
+                Cache::tags(["dashboard:admin:complaints"])->flush();
+                Cache::tags(["dashboard:officer:complaints"])->flush();
             },
             audit: function (Complaint $complaint) use ($citizenId) {
                 return [
@@ -117,6 +119,8 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             after: function () use ($citizenId, $complaintId) {
                 Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
                 Cache::tags(["complaint:{$complaintId}"])->flush();
+                 Cache::tags(["dashboard:admin:complaints"])->flush();
+                 Cache::tags(["dashboard:officer:complaints"])->flush();
             },
             audit: function () use ($citizenId, $complaintId) {
                 return [
@@ -138,6 +142,8 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             after: function () use ($citizenId , $complaintId) {
                 Cache::tags(["citizen:{$citizenId}:complaints"])->flush();
                 Cache::tags(["complaint:{$complaintId}"])->flush();
+                Cache::tags(["dashboard:admin:complaints"])->flush();
+                Cache::tags(["dashboard:officer:complaints"])->flush();
             },
             audit: function () use ($citizenId, $complaintId, $extraText, $extraAttachment) {
                 return [

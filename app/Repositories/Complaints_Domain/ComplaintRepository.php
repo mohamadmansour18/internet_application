@@ -115,7 +115,7 @@ class ComplaintRepository
         {
             $cacheTag = "dashboard:admin:complaints";
         }else{
-            $cacheTag = "dashboard:officer:{$userId}:complaints";
+            $cacheTag = "dashboard:officer:complaints";
         }
 
         return Cache::tags([$cacheTag])
