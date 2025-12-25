@@ -22,6 +22,7 @@ class FcmNotificationRequested
         public array $userIds ,
         public string $title ,
         public string $body ,
+        public int $complaintId
     )
     {}
 // collect([$user])

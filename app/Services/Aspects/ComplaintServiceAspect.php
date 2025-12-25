@@ -15,6 +15,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Throwable;
 
 class ComplaintServiceAspect implements ComplaintServiceInterface
 {
@@ -212,15 +213,17 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             callback: fn () => $this->inner->startProcessingComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
-                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم وضع الشكوى الخاصة بك ذو الرقم {$complaint->number} قيد المعالجة"));
-
+                FcmNotificationRequested::dispatch([$complaint->citizen_id] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم وضع الشكوى الخاصة بك ذو الرقم {$complaint->number} قيد المعالجة") , $complaintId);
+                //"dashboard:officer:complaints"
                 Cache::tags([
                     "citizen:{$complaint->citizen_id}:complaints",
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
+                    "dashboard:officer:complaints",
                     "dashboard:officer:{$userId}:complaints",
-                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
+
+                Cache::forget("citizen:notifications:{$complaint->citizen_id}");
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
                 return [
@@ -244,15 +247,17 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             callback: fn () => $this->inner->rejectComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
-                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم رفض الشكوى الخاصة بك ذو الرقم {$complaint->number}"));
+                FcmNotificationRequested::dispatch([$complaint->citizen_id] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم رفض الشكوى الخاصة بك ذو الرقم {$complaint->number}"), $complaintId);
 
                 Cache::tags([
                     "citizen:{$complaint->citizen_id}:complaints",
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
+                    "dashboard:officer:complaints",
                     "dashboard:officer:{$userId}:complaints",
-                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
+
+                Cache::forget("citizen:notifications:{$complaint->citizen_id}");
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
                 return [
@@ -275,15 +280,17 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             callback: fn () => $this->inner->finishComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId) {
 
-                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم انهاء معالجة الشكوى الخاصة بك ذو الرقم {$complaint->number}"));
+                FcmNotificationRequested::dispatch([$complaint->citizen_id] , "تعديل حالة الشكوى" , TextHelper::fixBidi("عزيزي المستخدم تم انهاء معالجة الشكوى الخاصة بك ذو الرقم {$complaint->number}") , $complaintId);
 
                 Cache::tags([
                     "citizen:{$complaint->citizen_id}:complaints",
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
+                    "dashboard:officer:complaints",
                     "dashboard:officer:{$userId}:complaints",
-                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
+
+                Cache::forget("citizen:notifications:{$complaint->citizen_id}");
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
                 return [
@@ -306,15 +313,17 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
             callback: fn () => $this->inner->requestMoreInfoToComplaint($userId, $complaintId, $note),
             after: function (Complaint $complaint) use ($userId , $complaintId , $note) {
 
-                FcmNotificationRequested::dispatch([$userId] , "تعديل حالة الشكوى" , TextHelper::fixBidi($note));
+                FcmNotificationRequested::dispatch([$complaint->citizen_id] , "تعديل حالة الشكوى" , TextHelper::fixBidi($note) , $complaintId);
 
                 Cache::tags([
                     "citizen:{$complaint->citizen_id}:complaints",
                     "complaint:{$complaintId}",
                     "dashboard:admin:complaints",
+                    "dashboard:officer:complaints",
                     "dashboard:officer:{$userId}:complaints",
-                    "citizen:notifications:{$complaint->citizen_id}"
                 ])->flush();
+
+                Cache::forget("citizen:notifications:{$complaint->citizen_id}");
             },
             audit: function (Complaint $complaint) use ($userId, $note) {
                 return [
@@ -391,6 +400,9 @@ class ComplaintServiceAspect implements ComplaintServiceInterface
                         'year'     => now()->year,
                     ],
                 ];
+            },
+            onError: function (Throwable $exception){
+                \Log::channel('aspect')->error("[On Error] : " . $exception->getMessage());
             },
         );
     }

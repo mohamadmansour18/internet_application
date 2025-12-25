@@ -45,7 +45,7 @@ class RunBackupWithLog extends Command
             return self::SUCCESS;
 
         } catch (\Throwable $e) {
-            // في حال فشل عملية النسخ، نسجّل ذلك برضه
+
             Backup::create([
                 'run_at' => $runAt,
                 'status' => 'failed',

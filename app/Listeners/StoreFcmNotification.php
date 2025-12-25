@@ -21,7 +21,7 @@ class StoreFcmNotification implements ShouldQueue
         $users = User::whereIn('id', $event->userIds)->get();
 
         foreach ($users as $user) {
-            $user->notify(new FcmNotification($event->title, $event->body));
+            $user->notify(new FcmNotification($event->title, $event->body , $event->complaintId));
         }
     }
 }

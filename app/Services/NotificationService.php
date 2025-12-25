@@ -26,6 +26,7 @@ class NotificationService
                     'id'    => $notification->id,
                     'title' => $notification->data['title'] ?? '',
                     'body'  => $notification->data['body'] ?? '',
+                    'compliant_id' =>  $notification->data['complaint_id'] ?? '',
                     'date'  => Carbon::parse($notification->created_at)->diffForHumans(),
                 ];
             })->toArray();

@@ -39,6 +39,7 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function configureRateLimiting(): void
     {
+
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by(
                 optional($request->user())->id ?: $request->ip()
@@ -73,17 +74,17 @@ class RouteServiceProvider extends ServiceProvider
             $user = $request->user();
             $baseKey = $user ? 'user:' . $user->id : 'ip:' . $request->ip();
 
-            if($user && $user->role === UserRole::MANAGER->value)
+            if($user && $user->role->value === UserRole::MANAGER->value)
             {
                 $max = config('rateLimits.manager' , 100);
                 return Limit::perMinute($max)->by($baseKey);
             }
-            if($user && $user->role === UserRole::OFFICER->value)
+            if($user && $user->role->value === UserRole::OFFICER->value)
             {
                 $max = config('rateLimits.officer' , 75);
                 return Limit::perMinute($max)->by($baseKey);
             }
-            if($user && $user->role === UserRole::CITIZEN->value)
+            if($user && $user->role->value === UserRole::CITIZEN->value)
             {
                 $max = config('rateLimits.citizen' , 25);
                 return Limit::perMinute($max)->by($baseKey);

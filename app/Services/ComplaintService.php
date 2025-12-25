@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Mpdf\Mpdf;
+use ZipArchive;
 
 class ComplaintService implements ComplaintServiceInterface
 {
@@ -403,16 +404,43 @@ class ComplaintService implements ComplaintServiceInterface
         Storage::disk('public')->makeDirectory('stats');
 
         $baseName     = "complaints_stats_{$year}";
-        $relativePath = "stats/{$baseName}.{$format}";
-        $fullPath     = Storage::disk('public')->path($relativePath);
-        $fileName     = "{$baseName}.{$format}";
 
         try {
             if ($format === 'csv') {
+
+                $relativePath = "stats/{$baseName}.csv}";
+                $fullPath     = Storage::disk('public')->path($relativePath);
                 $this->generateCsvFile($fullPath, $items, $year);
-            } else {
-                $this->generatePdfFile($fullPath, $items, $year);
+
+                return ['full_path' => $fullPath, 'file_name' => "{$baseName}.csv"];
             }
+            if($format === 'zip'){
+                //temp pdf file
+                $pdfRelativePath = "stats/{$baseName}.pdf";
+                $pdfFullPath     = Storage::disk('public')->path($pdfRelativePath);
+                $this->generatePdfFile($pdfFullPath, $items, $year);
+
+                //compress pdf file
+                $zipRelativePath = "stats/{$baseName}.zip";
+                $zipFullPath     = Storage::disk('public')->path($zipRelativePath);
+
+                $this->createZipWithSingleFile(
+                    zipFullPath: $zipFullPath,
+                    fileToAddFullPath: $pdfFullPath,
+                    fileNameInsideZip: "{$baseName}.pdf"
+                );
+
+                @unlink($pdfFullPath);
+
+                return ['full_path' => $zipFullPath, 'file_name' => "{$baseName}.zip"];
+            }
+
+            $relativePath = "stats/{$baseName}.pdf";
+            $fullPath     = Storage::disk('public')->path($relativePath);
+            $this->generatePdfFile($fullPath, $items, $year);
+
+            return ['full_path' => $fullPath, 'file_name' => "{$baseName}.pdf"];
+
         }catch (\Throwable $exception)
         {
             Log::error('PDF generation failed' , [
@@ -421,11 +449,6 @@ class ComplaintService implements ComplaintServiceInterface
             ]);
             throw new ApiException('! حدث خطأ غير متوقع اثناء التنفيذ', $exception->getCode());
         }
-
-        return [
-            'full_path' => $fullPath,
-            'file_name' => $fileName,
-        ];
     }
 
     protected function generateCsvFile(string $fullPath, array $items, int $year): void
@@ -482,6 +505,8 @@ class ComplaintService implements ComplaintServiceInterface
             'margin_right'      => 10,
         ]);
 
+        $mpdf->SetCompression(true);
+
         $html = view('reports.yearly_complaints_stats', [
             'year'  => $year,
             'items' => $items,
@@ -491,4 +516,21 @@ class ComplaintService implements ComplaintServiceInterface
         $mpdf->Output($fullPath, \Mpdf\Output\Destination::FILE);
     }
 
+    protected function createZipWithSingleFile(string $zipFullPath, string $fileToAddFullPath, string $fileNameInsideZip): void
+    {
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipFullPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            throw new ApiException("Cannot create zip file at: {$zipFullPath}" , 422);
+        }
+
+        if (!$zip->addFile($fileToAddFullPath, $fileNameInsideZip)) {
+            $zip->close();
+            throw new ApiException("Cannot add file to zip: {$fileToAddFullPath}" , 422);
+        }
+
+        $zip->setCompressionName($fileNameInsideZip, ZipArchive::CM_DEFLATE);
+
+        $zip->close();
+    }
 }

@@ -23,7 +23,7 @@ class FileFormatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'format' => ['required', 'string' , 'in:csv,pdf']
+            'format' => ['required', 'string' , 'in:csv,pdf,zip']
         ];
     }
 }

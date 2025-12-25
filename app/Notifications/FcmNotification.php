@@ -17,6 +17,7 @@ class FcmNotification extends Notification
     public function __construct(
         public string $title,
         public string $body,
+        public int $complaintId
     )
     {}
 
@@ -35,6 +36,7 @@ class FcmNotification extends Notification
         return [
             'title' => $this->title,
             'body' => $this->body,
+            'complaint_id' => $this->complaintId
         ];
     }
 }
