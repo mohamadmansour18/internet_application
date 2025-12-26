@@ -14,6 +14,9 @@ use App\Services\Contracts\AuthServiceInterface;
 use App\Services\Contracts\ComplaintServiceInterface;
 use App\Services\Contracts\ProfileServiceInterface;
 use App\Services\ProfileService;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Storage;
+use League\Flysystem\Filesystem;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -53,6 +56,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Storage::extend('google', function ($app, $config) {
+            $client = new \Google\Client();
+            $client->setClientId($config['clientId']);
+            $client->setClientSecret($config['clientSecret']);
+            $client->refreshToken($config['refreshToken']);
+
+            $service = new \Google\Service\Drive($client);
+
+            $adapter = new \Masbug\Flysystem\GoogleDriveAdapter(
+                $service,
+                $config['folder'] ?? '/'
+            );
+
+            $driver = new Filesystem($adapter);
+
+            return new FilesystemAdapter($driver, $adapter);
+        });
     }
 }

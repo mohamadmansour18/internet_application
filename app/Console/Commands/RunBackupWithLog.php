@@ -6,6 +6,7 @@ use App\Models\Backup;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class RunBackupWithLog extends Command
 {
@@ -32,7 +33,12 @@ class RunBackupWithLog extends Command
 
         try {
 
-            Artisan::call('backup:run');
+            $backupDir = config('backup.backup.name');
+            Storage::disk('google')->put($backupDir.'/.keep', 'created');
+
+            Artisan::call('backup:run' , ['--only-db' => true]);
+
+            Storage::disk('google')->delete($backupDir.'/.keep');
 
             Backup::create([
                 'run_at' => $runAt,

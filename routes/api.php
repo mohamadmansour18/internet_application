@@ -140,3 +140,6 @@ Route::get('/test-fcm', function (FirebaseNotificationService $fcm) {
  * Route::get('/search', ...)
     ->middleware('throttle:30,1'); //max.minutes
  */
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok'], 200);
+});

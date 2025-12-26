@@ -59,9 +59,10 @@ return [
         ],
 
         'aspect' => [
-            'driver' => 'single',
+            'driver' => 'daily',
             'path' => storage_path('logs/aspect.log'),
-            'level' => 'info'
+            'level' => 'info',
+             'days' => 10
         ],
 
         'single' => [
