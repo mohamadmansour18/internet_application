@@ -27,6 +27,11 @@ class ComplaintStatusHistory extends Model
 
     public function complaint(): BelongsTo
     {
-        return $this->belongsTo(Complaint::class , 'complaint-id' , 'id')->withDefault();
+        return $this->belongsTo(Complaint::class , 'complaint_id' , 'id')->withDefault();
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class , 'changed_by' , 'id')->withDefault();
     }
 }

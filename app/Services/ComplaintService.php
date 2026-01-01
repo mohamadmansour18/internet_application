@@ -224,6 +224,7 @@ class ComplaintService implements ComplaintServiceInterface
                 'day' => $complaintHistory->created_at->translatedFormat('l'),
                 'date' => $complaintHistory->created_at->format('Y-m-d'),
                 'status' => $complaintHistory->status,
+                'changed_by' => $complaintHistory->user->name ?? 'لم تستلم بعد',
                 'note' => $complaintHistory->note ?? "لايوجد",
             ];
         })->values()->toArray();

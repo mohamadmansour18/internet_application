@@ -33,7 +33,7 @@ class LoggingMiddleware
             $response = $next($request);
         }catch(\Throwable $exception)
         {
-            Log::Channel('aspect')->info("[$action] ERROR" , ['error' => $exception->getMessage()]);
+            Log::Channel('aspect')->error("[$action] ERROR" , ['error' => $exception->getMessage()]);
             throw $exception;
         }
 

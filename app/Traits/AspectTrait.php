@@ -51,6 +51,7 @@ trait AspectTrait
             {
                 $onError($exception);
             }
+            Log::Channel('aspect')->error("ERROR" , ['error' => $exception->getMessage()]);
             throw $exception;
         }
     }
