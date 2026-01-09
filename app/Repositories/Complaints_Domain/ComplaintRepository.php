@@ -77,7 +77,7 @@ class ComplaintRepository
     {
         $cacheKey = "citizen:{$citizenId}:complaint:{$complaintId}:details";
 
-        return Cache::tags(['complaint:{$complaintId}'])->remember($cacheKey , now()->addHours(6) , function () use ($complaintId) {
+        return Cache::tags(["complaint:{$complaintId}"])->remember($cacheKey , now()->addHours(6) , function () use ($complaintId) {
             return Complaint::query()
                 ->with(['attachments:id,complaint_id,path' , 'complaintHistories:id,complaint_id,status,note,created_at' , 'agency:id,name' , 'complaintType:id,name'])
                 ->where('id' , $complaintId)
